@@ -1,0 +1,32 @@
+{
+  "name": "crypto-detector",
+  "displayName": "Crypto Algorithm Detector",
+  "description": "Automatically detects and highlights cryptographic algorithms (e.g., SHA256, RSA, Kyber) in your source file.",
+  "version": "0.0.1",
+  "publisher": "your-publisher-id",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onCommand:crypto-detector.detectCrypto"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "crypto-detector.detectCrypto",
+        "title": "Detect Crypto Algorithms"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0"
+    
+  }
+}
