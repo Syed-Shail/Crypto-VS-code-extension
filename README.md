@@ -1,71 +1,47 @@
-# crypto-detector README
+ Crypto Detector for VS Code
 
-This is the README for your extension "crypto-detector". After writing up a brief description, we recommend including the following sections.
-
-## Features
-
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+Detect cryptographic algorithms, usage patterns, and their quantum-safety level directly in your code.
 
 ---
 
-## Following extension guidelines
+ Features
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+-  Automatically scans your files for known cryptographic algorithms.
+-  Displays:
+  - Algorithm name (e.g., RSA, AES, SHA-256)
+  - Location in code (line number, file)
+  - Usage count
+  - Quantum-safety status ✅❌
+-  Nicely formatted terminal summary report.
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+---
 
-## Working with Markdown
+  Example Output
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+| Algorithm | Type | Quantum-Safe? | Notes |
+|------------|------|---------------|-------|
+| AES-256 | Symmetric | ✅ | Considered quantum-resistant under Grover’s algorithm |
+| RSA | Asymmetric | ❌ | Broken by Shor’s algorithm |
+| ECC | Asymmetric | ❌ | Broken by Shor’s algorithm |
+| SHA-3 | Hash | ✅ | Secure against known quantum attacks |
 
-## For more information
+---
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+ Commands
 
-**Enjoy!**
+| Command | Description |
+|----------|-------------|
+| `Crypto Detector: Scan File` | Scans the currently open file |
+| `Crypto Detector: Scan Workspace` | Scans all project files |
+
+---
+
+ Author
+**Syed Shail**  
+[GitHub](https://github.com/syedshail)
+
+---
+
+ License
+MIT License © 2025 Syed Shail

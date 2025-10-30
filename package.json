@@ -3,7 +3,11 @@
   "displayName": "Crypto Algorithm Detector",
   "description": "Automatically detects and highlights cryptographic algorithms (e.g., SHA256, RSA, Kyber) in your source file.",
   "version": "0.0.1",
-  "publisher": "your-publisher-id",
+  "publisher": "syedshail",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Syed-Shail/Crypto-VS-code-extension"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },
