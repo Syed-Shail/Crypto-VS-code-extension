@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { parse } from '@babel/parser';
+import traverse from '@babel/traverse';
+import * as t from '@babel/types';
 
 /* --------------------------------------------------------------------------
  * Types
@@ -27,214 +30,20 @@ export interface CryptoAsset {
 }
 
 /* --------------------------------------------------------------------------
- * Algorithm Database (expanded to CBOMKit-level coverage)
+ * Regex-based Algorithm Database (for non-JS languages)
  * -------------------------------------------------------------------------- */
 const algorithmDB: Record<string, any> = {
-  // --- Hash Functions ---
-  MD5: {
-    regex: /\bmd5\b/gi,
-    type: 'Hash Function',
-    keySize: '128-bit',
-    securityLevel: 'Broken',
-    quantumSafe: '❌ Not quantum-safe (classical collisions + Grover)',
-    description: 'Obsolete hash function; avoid entirely.'
-  },
-  SHA1: {
-    regex: /\bsha-?1\b/gi,
-    type: 'Hash Function',
-    keySize: '160-bit',
-    securityLevel: 'Weak',
-    quantumSafe: '❌ Not quantum-safe (Grover halves effective strength)',
-    description: 'Deprecated hash with known collision vulnerabilities.'
-  },
-  SHA224: {
-    regex: /\bsha-?224\b/gi,
-    type: 'Hash Function',
-    keySize: '224-bit',
-    securityLevel: 'High',
-    quantumSafe: '⚠️ Partially safe (Grover halves effective strength)',
-    description: 'SHA-224 from SHA-2 family.'
-  },
-  SHA256: {
-    regex: /\bsha-?256\b/gi,
-    type: 'Hash Function',
-    keySize: '256-bit',
-    securityLevel: 'High',
-    quantumSafe: '⚠️ Partially safe (Grover halves effective strength)',
-    description: 'Secure hash widely used (SHA-2 family).'
-  },
-  SHA384: {
-    regex: /\bsha-?384\b/gi,
-    type: 'Hash Function',
-    keySize: '384-bit',
-    securityLevel: 'High',
-    quantumSafe: '⚠️ Partially safe (Grover halves effective strength)',
-    description: 'Strong hash (SHA-2 family).'
-  },
-  SHA512: {
-    regex: /\bsha-?512\b/gi,
-    type: 'Hash Function',
-    keySize: '512-bit',
-    securityLevel: 'High',
-    quantumSafe: '⚠️ Partially safe (Grover halves effective strength)',
-    description: '512-bit variant of SHA-2 family.'
-  },
-  SHA3: {
-    regex: /\bsha3(?:-|_)?(224|256|384|512)?\b/gi,
-    type: 'Hash Function',
-    keySize: '224–512-bit',
-    securityLevel: 'Very High',
-    quantumSafe: '⚠️ Partially safe (Grover halves effective strength)',
-    description: 'NIST SHA-3 (Keccak) hash family.'
-  },
-  BLAKE2: {
-    regex: /\bblake2[bbs]?(\d+)?\b/gi,
-    type: 'Hash Function',
-    keySize: 'Variable',
-    securityLevel: 'High',
-    quantumSafe: '⚠️ Partially safe',
-    description: 'Modern fast hash function alternative to SHA-2.'
-  },
-  // --- Symmetric Ciphers ---
-  AES: {
-    regex: /\baes(?:[-_]?(128|192|256))?\b/gi,
-    type: 'Symmetric Cipher',
-    keySize: '128/192/256-bit',
-    securityLevel: 'High',
-    quantumSafe: '⚠️ Partially safe (Grover halves key strength)',
-    description: 'Industry-standard symmetric block cipher.'
-  },
-  DES: {
-    regex: /\bdes\b/gi,
-    type: 'Symmetric Cipher',
-    keySize: '56-bit',
-    securityLevel: 'Broken',
-    quantumSafe: '❌ Not quantum-safe',
-    description: 'Outdated cipher vulnerable to brute force.'
-  },
-  '3DES': {
-    regex: /\b3des|triple[-_]?des\b/gi,
-    type: 'Symmetric Cipher',
-    keySize: '168-bit',
-    securityLevel: 'Weak',
-    quantumSafe: '❌ Not quantum-safe',
-    description: 'Legacy cipher, partially deprecated.'
-  },
-  CHACHA20: {
-    regex: /\bchacha(20)?\b/gi,
-    type: 'Stream Cipher',
-    keySize: '256-bit',
-    securityLevel: 'High',
-    quantumSafe: '⚠️ Partially safe',
-    description: 'Modern stream cipher, often paired with Poly1305.'
-  },
-  RC4: {
-    regex: /\brc4\b/gi,
-    type: 'Stream Cipher',
-    keySize: 'Variable',
-    securityLevel: 'Broken',
-    quantumSafe: '❌ Not quantum-safe',
-    description: 'Obsolete stream cipher; insecure.'
-  },
-  // --- MACs & Authentication ---
-  HMAC: {
-    regex: /\bhmac[-_]?sha?(1|2|3)?\b/gi,
-    type: 'MAC Function',
-    keySize: 'Variable',
-    securityLevel: 'High',
-    quantumSafe: '⚠️ Partially safe',
-    description: 'Hash-based message authentication code.'
-  },
-  CMAC: {
-    regex: /\bcmac\b/gi,
-    type: 'MAC Function',
-    keySize: 'Variable',
-    securityLevel: 'High',
-    quantumSafe: '⚠️ Partially safe',
-    description: 'Cipher-based MAC (e.g., AES-CMAC).'
-  },
-  // --- Asymmetric ---
-  RSA: {
-    regex: /\brsa[-_]?(2048|4096)?\b/gi,
-    type: 'Asymmetric Cipher',
-    keySize: '2048–4096-bit',
-    securityLevel: 'Medium',
-    quantumSafe: '❌ Not quantum-safe (Shor’s algorithm)',
-    description: 'Public-key encryption/signature algorithm.'
-  },
-  DSA: {
-    regex: /\bdsa\b/gi,
-    type: 'Asymmetric Cipher',
-    keySize: '1024–3072-bit',
-    securityLevel: 'Medium',
-    quantumSafe: '❌ Not quantum-safe',
-    description: 'Digital Signature Algorithm.'
-  },
-  ECDSA: {
-    regex: /\becdsa\b/gi,
-    type: 'Asymmetric Cipher',
-    keySize: '256–521-bit',
-    securityLevel: 'High',
-    quantumSafe: '❌ Not quantum-safe',
-    description: 'Elliptic Curve Digital Signature Algorithm.'
-  },
-  ED25519: {
-    regex: /\bed25519\b/gi,
-    type: 'Asymmetric Cipher',
-    keySize: '255-bit',
-    securityLevel: 'High',
-    quantumSafe: '❌ Not quantum-safe',
-    description: 'Fast ECC-based digital signature algorithm.'
-  },
-  ECDH: {
-    regex: /\becdh\b/gi,
-    type: 'Key Exchange',
-    keySize: '256-bit',
-    securityLevel: 'High',
-    quantumSafe: '❌ Not quantum-safe',
-    description: 'Elliptic Curve Diffie-Hellman key exchange.'
-  },
-  DH: {
-    regex: /\bdiffie[-_]?hellman\b|\bdh\b/gi,
-    type: 'Key Exchange',
-    keySize: '1024–4096-bit',
-    securityLevel: 'Medium',
-    quantumSafe: '❌ Not quantum-safe',
-    description: 'Classical key exchange, vulnerable to quantum attack.'
-  },
-  // --- Post-Quantum Algorithms ---
-  KYBER: {
-    regex: /\bkyber\b/gi,
-    type: 'Post-Quantum Cipher',
-    keySize: 'Variable',
-    securityLevel: 'Very High',
-    quantumSafe: '✅ Quantum-safe (NIST PQC finalist)',
-    description: 'Post-quantum key encapsulation mechanism.'
-  },
-  DILITHIUM: {
-    regex: /\bdilithium\b/gi,
-    type: 'Post-Quantum Signature',
-    keySize: 'Variable',
-    securityLevel: 'Very High',
-    quantumSafe: '✅ Quantum-safe (NIST PQC finalist)',
-    description: 'Post-quantum digital signature algorithm.'
-  },
-  FALCON: {
-    regex: /\bfalcon\b/gi,
-    type: 'Post-Quantum Signature',
-    keySize: 'Variable',
-    securityLevel: 'Very High',
-    quantumSafe: '✅ Quantum-safe',
-    description: 'Lattice-based post-quantum signature algorithm.'
-  },
-  SPHINCS: {
-    regex: /\bsphincs\b/gi,
-    type: 'Post-Quantum Signature',
-    keySize: 'Variable',
-    securityLevel: 'Very High',
-    quantumSafe: '✅ Quantum-safe',
-    description: 'Stateless hash-based post-quantum signature.'
-  }
+  MD5: { regex: /\bmd5\b/gi, type: 'Hash', quantumSafe: false, description: 'Obsolete hash function.' },
+  SHA1: { regex: /\bsha-?1\b/gi, type: 'Hash', quantumSafe: false, description: 'Weak hash function.' },
+  SHA256: { regex: /\bsha-?256\b/gi, type: 'Hash', quantumSafe: 'partial', description: 'SHA2 family hash.' },
+  SHA512: { regex: /\bsha-?512\b/gi, type: 'Hash', quantumSafe: 'partial', description: 'SHA2 family hash.' },
+  SHA3: { regex: /\bsha3\b/gi, type: 'Hash', quantumSafe: 'partial', description: 'SHA3 family hash.' },
+  AES: { regex: /\baes(?:[-_]?(128|192|256))?\b/gi, type: 'Cipher', quantumSafe: 'partial', description: 'AES block cipher.' },
+  RSA: { regex: /\brsa[-_]?(2048|4096)?\b/gi, type: 'Asymmetric', quantumSafe: false, description: 'Public-key crypto.' },
+  ECDSA: { regex: /\becdsa\b/gi, type: 'Signature', quantumSafe: false, description: 'ECC signature.' },
+  KYBER: { regex: /\bkyber\b/gi, type: 'Post-Quantum', quantumSafe: true, description: 'Post-quantum KEM.' },
+  DILITHIUM: { regex: /\bdilithium\b/gi, type: 'Post-Quantum', quantumSafe: true, description: 'Post-quantum signature.' },
+  FALCON: { regex: /\bfalcon\b/gi, type: 'Post-Quantum', quantumSafe: true, description: 'Post-quantum signature.' }
 };
 
 /* --------------------------------------------------------------------------
@@ -247,11 +56,11 @@ function makeId(name: string, variant?: string) {
 
 function offsetToLineNumbers(text: string, offsets: number[]): number[] {
   const lines: number[] = [];
-  if (offsets.length === 0) return lines;
   const lineStarts: number[] = [0];
   for (let i = 0; i < text.length; i++) if (text[i] === '\n') lineStarts.push(i + 1);
   for (const off of offsets) {
-    let lo = 0, hi = lineStarts.length - 1;
+    let lo = 0,
+      hi = lineStarts.length - 1;
     while (lo <= hi) {
       const mid = Math.floor((lo + hi) / 2);
       if (lineStarts[mid] <= off) lo = mid + 1;
@@ -270,20 +79,132 @@ function snippetAt(text: string, index: number, radius = 80) {
 }
 
 /* --------------------------------------------------------------------------
- * Core Detection
+ * Quantum Safety Classification
+ * -------------------------------------------------------------------------- */
+function classifyQuantumSafety(name: string): boolean | 'partial' | 'unknown' {
+  const lower = name.toLowerCase();
+  if (lower.includes('rsa') || lower.includes('ecdsa') || lower.includes('sha1') || lower.includes('md5')) return false;
+  if (lower.includes('aes') || lower.includes('sha2') || lower.includes('sha3') || lower.includes('sha256')) return 'partial';
+  if (lower.includes('kyber') || lower.includes('dilithium') || lower.includes('falcon')) return true;
+  return 'unknown';
+}
+
+/* --------------------------------------------------------------------------
+ * AST-based Detector for JS/TS (robust, avoids type mismatches)
+ * -------------------------------------------------------------------------- */
+function detectInJsAst(text: string, filePath: string): CryptoAsset[] {
+  const found: Record<string, CryptoAsset> = {};
+
+  // parse into an AST (we will cast to any when traversing to avoid cross-package type mismatch)
+  let parsedAst: any;
+  try {
+    parsedAst = parse(text, {
+      sourceType: 'module',
+      plugins: ['typescript', 'jsx'],
+      allowReturnOutsideFunction: true
+    });
+  } catch (err) {
+    console.error(`AST parse error in ${filePath}:`, err);
+    return [];
+  }
+
+  // traverse as any -> avoids TS type incompatibility between different @babel/types instances
+  traverse(parsedAst as any, {
+    CallExpression(path: any) {
+      const node: any = path.node;
+
+      // Only handle member expressions: object.method(...)
+      if (!t.isMemberExpression(node.callee)) return;
+      const obj = node.callee.object;
+      const prop = node.callee.property;
+
+      if (!t.isIdentifier(obj) || !t.isIdentifier(prop)) return;
+
+      const objectName = obj.name;
+      const methodName = prop.name;
+
+      // Detect Node.js crypto API calls
+      if (objectName === 'crypto' && ['createHash', 'createCipheriv', 'createDecipheriv', 'createHmac'].includes(methodName)) {
+        let algorithm: string | undefined;
+
+        if (node.arguments && node.arguments.length > 0) {
+          const firstArg = node.arguments[0];
+
+          // literal string argument
+          if (t.isStringLiteral(firstArg)) {
+            algorithm = firstArg.value;
+          }
+          // variable argument - try to resolve simple initializer (var/const)
+          else if (t.isIdentifier(firstArg)) {
+            const varName = firstArg.name;
+            // path.scope.getBinding exists on Babel Path; check defensively
+            const binding = typeof path.scope?.getBinding === 'function' ? path.scope.getBinding(varName) : undefined;
+            if (binding && binding.path) {
+              // binding.path may be any NodePath; check for variable declarator and initializer
+              try {
+                if (typeof binding.path.isVariableDeclarator === 'function' && binding.path.isVariableDeclarator()) {
+                  const init = binding.path.node.init;
+                  if (init && t.isStringLiteral(init)) {
+                    algorithm = init.value;
+                  }
+                }
+              } catch {
+                // ignore binding inspection errors
+              }
+            }
+          }
+        }
+
+        // If we found an algorithm string, record it
+        if (algorithm) {
+          const name = algorithm.toUpperCase();
+          const line = node.loc?.start?.line ?? 0;
+          const id = `js:${name}`;
+
+          if (!found[id]) {
+            found[id] = {
+              id,
+              assetType: 'algorithm',
+              primitive: 'unknown',
+              name,
+              description: `Detected in ${objectName}.${methodName}()`,
+              quantumSafe: classifyQuantumSafety(name),
+              detectionContexts: [{ filePath, lineNumbers: [line], snippet: snippetAt(text, node.start ?? 0) }],
+              occurrences: 1
+            };
+          } else {
+            found[id].occurrences += 1;
+            found[id].detectionContexts.push({ filePath, lineNumbers: [line], snippet: snippetAt(text, node.start ?? 0) });
+          }
+        }
+      }
+    }
+  });
+
+  return Object.values(found);
+}
+
+/* --------------------------------------------------------------------------
+ * Unified Detector (AST + Regex)
  * -------------------------------------------------------------------------- */
 export async function detectInDocument(uri: vscode.Uri): Promise<CryptoAsset[]> {
   const doc = await vscode.workspace.openTextDocument(uri);
   const text = doc.getText();
+
+  // Use AST for JS/TS files
+  if (uri.fsPath.endsWith('.js') || uri.fsPath.endsWith('.ts') || uri.fsPath.endsWith('.jsx') || uri.fsPath.endsWith('.tsx')) {
+    return detectInJsAst(text, uri.fsPath);
+  }
+
+  // Fallback to regex detection for other languages
   const found: Record<string, CryptoAsset> = {};
 
   for (const [name, info] of Object.entries(algorithmDB)) {
-    const regex: RegExp = info.regex;
+    const regex = info.regex as RegExp;
     const flags = regex.flags.includes('g') ? regex.flags : regex.flags + 'g';
     const r = new RegExp(regex.source, flags);
-
-    let match: RegExpExecArray | null;
     const offsets: number[] = [];
+    let match: RegExpExecArray | null;
     while ((match = r.exec(text)) !== null) {
       offsets.push(match.index);
       if (match[0].length === 0) r.lastIndex++;
@@ -292,32 +213,17 @@ export async function detectInDocument(uri: vscode.Uri): Promise<CryptoAsset[]> 
     if (offsets.length > 0) {
       const lines = offsetToLineNumbers(text, offsets);
       const contexts: DetectionContext[] = [
-        {
-          filePath: uri.fsPath,
-          lineNumbers: lines,
-          snippet: snippetAt(text, offsets[0])
-        }
+        { filePath: uri.fsPath, lineNumbers: lines, snippet: snippetAt(text, offsets[0]) }
       ];
-
-      const primitive = info.primitive ?? info.type ?? 'unknown';
-      const rawQS = info.quantumSafe ?? 'unknown';
-      let quantumSafe: boolean | 'partial' | 'unknown' = 'unknown';
-      if (typeof rawQS === 'string') {
-        if (rawQS.includes('✅')) quantumSafe = true;
-        else if (rawQS.includes('⚠')) quantumSafe = 'partial';
-        else if (rawQS.includes('❌')) quantumSafe = false;
-      }
-
       const id = makeId(name, info.variant);
       if (!found[id]) {
         found[id] = {
           id,
           assetType: 'algorithm',
-          primitive,
+          primitive: info.type || 'unknown',
           name,
           variant: info.variant,
-          keySize: info.keySize,
-          quantumSafe,
+          quantumSafe: info.quantumSafe,
           description: info.description,
           detectionContexts: contexts,
           occurrences: offsets.length
@@ -328,6 +234,7 @@ export async function detectInDocument(uri: vscode.Uri): Promise<CryptoAsset[]> 
       }
     }
   }
+
   return Object.values(found);
 }
 
@@ -335,15 +242,13 @@ export async function detectInDocument(uri: vscode.Uri): Promise<CryptoAsset[]> 
  * Workspace Scanner
  * -------------------------------------------------------------------------- */
 export async function scanWorkspace(
-  languageGlobs: string[] = ['**/*.{js,ts,py,java,go,rs,cpp,c,h}'],
+  languageGlobs: string[] = ['**/*.{js,ts,py,java,cpp,c}'],
   excludeGlobs: string[] = ['**/node_modules/**', '**/.git/**', '**/venv/**'],
   onProgress?: (p: { processed: number; total?: number }) => void,
   token?: vscode.CancellationToken
 ): Promise<CryptoAsset[]> {
-  const files = await Promise.all(
-    languageGlobs.map(g => vscode.workspace.findFiles(g, `{${excludeGlobs.join(',')}}`))
-  );
-  const uris = files.flat();
+  const files = await Promise.all(languageGlobs.map(g => vscode.workspace.findFiles(g, `{${excludeGlobs.join(',')}}`)));
+  const uris = Array.from(new Set(files.flat().map(u => u.fsPath))).map(fp => vscode.Uri.file(fp));
   const total = uris.length;
   const aggregated: Record<string, CryptoAsset> = {};
   let processed = 0;
@@ -359,15 +264,18 @@ export async function scanWorkspace(
           aggregated[a.id].detectionContexts.push(...a.detectionContexts);
         }
       }
-    } catch { /* skip unreadable files */ }
+    } catch (err) {
+      // ignore parse/read errors for individual files
+    }
     processed++;
     onProgress?.({ processed, total });
   }
+
   return Object.values(aggregated);
 }
 
 /* --------------------------------------------------------------------------
- * Simple CBOM Writer (summary only, not full CBOM format)
+ * Report Writer
  * -------------------------------------------------------------------------- */
 export async function writeCbomJson(assets: CryptoAsset[], workspaceFolder?: vscode.WorkspaceFolder) {
   if (!workspaceFolder) {
@@ -375,21 +283,19 @@ export async function writeCbomJson(assets: CryptoAsset[], workspaceFolder?: vsc
     if (!folders?.length) throw new Error('No workspace folder open');
     workspaceFolder = folders[0];
   }
+
   const report = {
     generatedAt: new Date().toISOString(),
     generator: 'crypto-detector-vscode',
     detected: assets.map(a => ({
       algorithm: a.name,
-      primitive: a.primitive,
       occurrences: a.occurrences,
       quantumSafe: a.quantumSafe,
       description: a.description,
-      files: a.detectionContexts.map(c => ({
-        file: c.filePath,
-        lines: c.lineNumbers
-      }))
+      files: a.detectionContexts.map(c => ({ file: c.filePath, lines: c.lineNumbers }))
     }))
   };
+
   const outPath = path.join(workspaceFolder.uri.fsPath, 'cbom.json');
   await fs.writeFile(outPath, JSON.stringify(report, null, 2), 'utf8');
   return outPath;

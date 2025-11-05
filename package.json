@@ -11,7 +11,9 @@
   "engines": {
     "vscode": "^1.80.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "activationEvents": [
     "onCommand:crypto-detector.detectCrypto",
     "onCommand:crypto-detector.scanWorkspace",
@@ -42,12 +44,18 @@
       "properties": {
         "cryptoDetector.languageGlobs": {
           "type": "array",
-          "default": ["**/*.{js,ts,py,java,go,rs,cpp,c,h}"],
+          "default": [
+            "**/*.{js,ts,py,java,go,rs,cpp,c,h}"
+          ],
           "description": "File patterns (globs) to include when scanning the workspace."
         },
         "cryptoDetector.excludeGlobs": {
           "type": "array",
-          "default": ["**/node_modules/**", "**/.git/**", "**/venv/**"],
+          "default": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/venv/**"
+          ],
           "description": "Folders or file patterns to exclude from scanning."
         },
         "cryptoDetector.outputCbom": {
@@ -67,5 +75,9 @@
     "@types/node": "^18.0.0",
     "@types/vscode": "^1.80.0",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.28.5",
+    "@babel/traverse": "^7.28.5"
   }
 }
