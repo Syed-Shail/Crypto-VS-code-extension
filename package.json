@@ -1,8 +1,8 @@
 {
   "name": "crypto-detector",
   "displayName": "Crypto Algorithm Detector",
-  "description": "Automatically detects and highlights cryptographic algorithms (e.g., SHA256, RSA, Kyber) in your source file.",
-  "version": "0.0.1",
+  "description": "Automatically detects and highlights cryptographic algorithms (e.g., SHA256, RSA, Kyber) in your source file or entire workspace, and exports a CBOM report.",
+  "version": "0.0.2",
   "publisher": "syedshail",
   "repository": {
     "type": "git",
@@ -12,15 +12,51 @@
     "vscode": "^1.80.0"
   },
   "categories": ["Other"],
-  "activationEvents": ["onCommand:crypto-detector.detectCrypto"],
+  "activationEvents": [
+    "onCommand:crypto-detector.detectCrypto",
+    "onCommand:crypto-detector.scanWorkspace",
+    "onCommand:crypto-detector.exportCbom"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "crypto-detector.detectCrypto",
-        "title": "Detect Crypto Algorithms"
+        "title": "Crypto Detector: Scan Current File",
+        "category": "Crypto Detector"
+      },
+      {
+        "command": "crypto-detector.scanWorkspace",
+        "title": "Crypto Detector: Scan Entire Workspace",
+        "category": "Crypto Detector"
+      },
+      {
+        "command": "crypto-detector.exportCbom",
+        "title": "Crypto Detector: Export CBOM (cbom.json)",
+        "category": "Crypto Detector"
       }
-    ]
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Crypto Detector Settings",
+      "properties": {
+        "cryptoDetector.languageGlobs": {
+          "type": "array",
+          "default": ["**/*.{js,ts,py,java,go,rs,cpp,c,h}"],
+          "description": "File patterns (globs) to include when scanning the workspace."
+        },
+        "cryptoDetector.excludeGlobs": {
+          "type": "array",
+          "default": ["**/node_modules/**", "**/.git/**", "**/venv/**"],
+          "description": "Folders or file patterns to exclude from scanning."
+        },
+        "cryptoDetector.outputCbom": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, writes a cbom.json report after scanning."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -31,6 +67,5 @@
     "@types/node": "^18.0.0",
     "@types/vscode": "^1.80.0",
     "typescript": "^5.0.0"
-    
   }
 }
