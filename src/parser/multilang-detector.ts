@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import  Parser from 'tree-sitter';
+import Parser from 'tree-sitter';
 import Python from 'tree-sitter-python';
 import Java from 'tree-sitter-java';
 import C from 'tree-sitter-c';
@@ -19,10 +19,42 @@ const LANGUAGE_PARSERS: Record<string, any> = {
 };
 
 /**
- * Load JSON rule database dynamically
+ * Load rule database dynamically
  */
 const rulesPath = path.join(__dirname, 'rules', 'crypto-rules.json');
 const CRYPTO_RULES = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
+
+/**
+ * Assigns severity and numeric risk score based on quantum safety + algorithm type.
+ */
+function assignRisk(
+  quantumSafe: boolean | 'partial' | 'unknown',
+  type: string
+): { severity: 'low' | 'medium' | 'high'; score: number } {
+  let score = 0;
+  let severity: 'low' | 'medium' | 'high' = 'low';
+
+  if (quantumSafe === false) {
+    score = 90;
+    severity = 'high';
+  } else if (quantumSafe === 'partial') {
+    score = 60;
+    severity = 'medium';
+  } else if (quantumSafe === true) {
+    score = 20;
+    severity = 'low';
+  } else {
+    score = 50;
+    severity = 'medium';
+  }
+
+  // Adjust risk slightly depending on type
+  if (type === 'asymmetric' || type === 'keygen') score += 10;
+  if (type === 'hash') score -= 10;
+  if (score > 100) score = 100;
+
+  return { severity, score };
+}
 
 /**
  * Multi-language AST-based crypto detector
@@ -50,6 +82,10 @@ export async function detectMultiLang(uri: vscode.Uri): Promise<CryptoAsset[]> {
     for (const rule of langRules) {
       if (snippet.includes(rule.api)) {
         const line = text.substring(0, node.startIndex).split('\n').length;
+        const { severity, score } = assignRisk(rule.quantumSafe, rule.type);
+
+        console.log(`🧠 Assigning risk for ${rule.api}: type=${rule.type}, quantumSafe=${rule.quantumSafe}`);
+
         results.push({
           id: `${langKey}:${rule.api}`,
           assetType: 'algorithm',
@@ -58,12 +94,14 @@ export async function detectMultiLang(uri: vscode.Uri): Promise<CryptoAsset[]> {
           quantumSafe: rule.quantumSafe,
           description: rule.description,
           detectionContexts: [{ filePath: uri.fsPath, lineNumbers: [line], snippet }],
-          occurrences: 1
+          occurrences: 1,
+          severity,
+          riskScore: score
         });
       }
     }
 
-    // Recursively visit children
+    // Recursively walk children
     for (let i = 0; i < node.childCount; i++) {
       walk(node.child(i));
     }

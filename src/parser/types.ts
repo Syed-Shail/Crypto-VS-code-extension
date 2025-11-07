@@ -1,8 +1,3 @@
-// src/parser/types.ts
-import * as vscode from 'vscode';
-
-export type AssetType = 'algorithm' | 'library' | 'key' | 'certificate';
-
 export interface DetectionContext {
   filePath: string;
   lineNumbers: number[];
@@ -11,7 +6,7 @@ export interface DetectionContext {
 
 export interface CryptoAsset {
   id: string;
-  assetType: AssetType;
+  assetType: 'algorithm' | 'library' | 'key' | 'certificate';
   primitive: string;
   name: string;
   variant?: string;
@@ -20,4 +15,6 @@ export interface CryptoAsset {
   description?: string;
   detectionContexts: DetectionContext[];
   occurrences: number;
+  severity?: 'low' | 'medium' | 'high';
+  riskScore?: number;
 }

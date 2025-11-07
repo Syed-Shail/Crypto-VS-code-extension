@@ -13,19 +13,39 @@ function formatResults(results: CryptoAsset[]): string {
 
   let output = '🔍 Detected Cryptographic Algorithms:\n\n';
   output += '------------------------------------------------------------\n';
+
   for (const a of results) {
-    output += `• ${a.name} (${a.primitive}) — Quantum-Safe: ${a.quantumSafe}\n`;
+    const name = a.name ?? 'Unknown Algorithm';
+    const primitive = a.primitive ?? 'unknown';
+    const quantumSafe = a.quantumSafe ?? 'unknown';
+    const severity = a.severity ?? 'unknown';
+    const risk = a.riskScore ?? 0;
+
+    let color = '🟩';
+    if (severity === 'medium') color = '🟧';
+    else if (severity === 'high') color = '🟥';
+    else if (severity === 'unknown') color = '⚪';
+
+    output += `${color} ${name} (${primitive}) — Severity: ${severity.toUpperCase()} (Risk Score: ${risk})\n`;
+    output += `  Quantum-Safe: ${quantumSafe}\n`;
     output += `  Occurrences: ${a.occurrences}\n`;
-    for (const ctx of a.detectionContexts) {
-      const lines = ctx.lineNumbers.join(', ');
-      output += `  File: ${ctx.filePath}\n`;
+
+    for (const ctx of a.detectionContexts ?? []) {
+      const lines = ctx.lineNumbers?.join(', ') ?? 'unknown';
+      const snippet = ctx.snippet ?? '';
+      const file = ctx.filePath ?? '(unknown file)';
+
+      output += `  File: ${file}\n`;
       output += `  Lines: ${lines}\n`;
-      if (ctx.snippet) output += `  Snippet: ${ctx.snippet}\n`;
+      if (snippet) output += `  Snippet: ${snippet}\n`;
     }
+
     output += '------------------------------------------------------------\n';
   }
+
   return output;
 }
+
 
 /**
  * Activates the extension and registers commands.

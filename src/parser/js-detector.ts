@@ -2,9 +2,9 @@
 
 import * as vscode from 'vscode';
 import * as ts from 'typescript';
-import { DetectorPlugin } from './detector-base';
-import { CryptoAsset } from './types';
+import { CryptoAsset } from './types.js';
 import * as fs from 'fs';
+import { assignRisk } from './risk-utils.js';
 
 /* --------------------------------------------------------------------------
  * Helpers
@@ -44,7 +44,7 @@ function classifyQuantumSafety(name: string): boolean | 'partial' | 'unknown' {
 /* --------------------------------------------------------------------------
  * Main JS/TS Detector
  * -------------------------------------------------------------------------- */
-export const jsDetector: DetectorPlugin = {
+export const jsDetector = {
   extensions: ['.js', '.jsx', '.ts', '.tsx'],
   languageIds: ['javascript', 'typescript'],
 
@@ -60,7 +60,7 @@ export const jsDetector: DetectorPlugin = {
       module: ts.ModuleKind.CommonJS,
     };
 
-    // Directly include the current file in the program
+    // Create a simple program for the file
     const program = ts.createProgram([filePath], compilerOptions);
     const checker = program.getTypeChecker();
     const sourceFile = program.getSourceFile(filePath);
@@ -75,7 +75,7 @@ export const jsDetector: DetectorPlugin = {
     const fileText = fs.readFileSync(filePath, 'utf8');
     const found: Record<string, CryptoAsset> = {};
 
-    // Helper function to safely visit nodes
+    // Recursive visitor
     const visit = (node: ts.Node): void => {
       if (ts.isCallExpression(node)) {
         const expr = node.expression;
@@ -84,6 +84,7 @@ export const jsDetector: DetectorPlugin = {
           const objName = expr.expression.getText(sourceFile);
           const methodName = expr.name.getText(sourceFile);
 
+          // Detect crypto API usage
           if (
             objName === 'crypto' &&
             ['createHash', 'createHmac', 'createCipheriv', 'createDecipheriv'].includes(methodName)
@@ -108,6 +109,9 @@ export const jsDetector: DetectorPlugin = {
             if (algorithm) {
               const nameUp = algorithm.toUpperCase();
               const id = makeId(nameUp);
+              const quantumSafe = classifyQuantumSafety(nameUp);
+              const { severity, score } = assignRisk(quantumSafe, 'hash');
+
               const pos = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
               const snippet = snippetAt(fileText, node.getStart(sourceFile));
 
@@ -115,29 +119,29 @@ export const jsDetector: DetectorPlugin = {
                 found[id] = {
                   id,
                   assetType: 'algorithm',
-                  primitive: 'unknown',
+                  primitive: 'hash',
                   name: nameUp,
-                  description: `Detected in crypto.${methodName}()`,
-                  quantumSafe: classifyQuantumSafety(nameUp),
+                  description: `Detected in ${objName}.${methodName}()`,
+                  quantumSafe,
                   detectionContexts: [
-                    {
-                      filePath,
-                      lineNumbers: [pos.line + 1],
-                      snippet,
-                    },
+                    { filePath, lineNumbers: [pos.line + 1], snippet }
                   ],
                   occurrences: 1,
+                  severity,
+                  riskScore: score
                 };
               } else {
                 found[id].occurrences += 1;
                 found[id].detectionContexts.push({
                   filePath,
                   lineNumbers: [pos.line + 1],
-                  snippet,
+                  snippet
                 });
               }
 
-              console.log(`✅ [JS DETECTOR] Found algorithm: ${nameUp} at line ${pos.line + 1}`);
+              console.log(
+                `✅ [JS DETECTOR] Found algorithm: ${nameUp} | Severity: ${severity} | Risk: ${score}`
+              );
             }
           }
         }
@@ -146,12 +150,8 @@ export const jsDetector: DetectorPlugin = {
       ts.forEachChild(node, visit);
     };
 
-    // Call visit with assertion since we returned if it was undefined
     visit(sourceFile);
-
-    console.log(
-      `📦 [JS DETECTOR] Finished scanning ${filePath}. Found ${Object.keys(found).length} algorithm(s).`
-    );
+    console.log(`📦 [JS DETECTOR] Finished scanning ${filePath}. Found ${Object.keys(found).length} algorithms.`);
     return Object.values(found);
   },
 };
