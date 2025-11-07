@@ -19,7 +19,8 @@
 
     /* Strictness */
     "strict": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": ["./src", "./node_modules/@types"]
 
     /* Optional additional checks (uncomment if you want stricter builds)
     "noImplicitReturns": true,

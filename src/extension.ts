@@ -1,97 +1,138 @@
+// src/extension.ts
+
 import * as vscode from 'vscode';
-import * as parser from './parser';
+import * as parser from './parser/index.js';
+import { CryptoAsset } from './parser/types.js';
+import { generateAndDownloadCbom } from './parser/report-writer.js';
 
+/**
+ * Formats the detected crypto assets for display in VS Code output.
+ */
+function formatResults(results: CryptoAsset[]): string {
+  if (results.length === 0) return '✅ No cryptographic algorithms detected.\n';
+
+  let output = '🔍 Detected Cryptographic Algorithms:\n\n';
+  output += '------------------------------------------------------------\n';
+  for (const a of results) {
+    output += `• ${a.name} (${a.primitive}) — Quantum-Safe: ${a.quantumSafe}\n`;
+    output += `  Occurrences: ${a.occurrences}\n`;
+    for (const ctx of a.detectionContexts) {
+      const lines = ctx.lineNumbers.join(', ');
+      output += `  File: ${ctx.filePath}\n`;
+      output += `  Lines: ${lines}\n`;
+      if (ctx.snippet) output += `  Snippet: ${ctx.snippet}\n`;
+    }
+    output += '------------------------------------------------------------\n';
+  }
+  return output;
+}
+
+/**
+ * Activates the extension and registers commands.
+ */
 export function activate(context: vscode.ExtensionContext) {
-  const diagnosticCollection = vscode.languages.createDiagnosticCollection('crypto-detector');
-  context.subscriptions.push(diagnosticCollection);
+  const output = vscode.window.createOutputChannel('Crypto Detector');
 
-  const detectSingle = vscode.commands.registerCommand('crypto-detector.detectCrypto', async () => {
+  /**
+   * Command: Scan current file
+   */
+  const scanFileCmd = vscode.commands.registerCommand('crypto-detector.detectCrypto', async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      vscode.window.showErrorMessage('Open a file to analyze first!');
+      vscode.window.showWarningMessage('No active file open.');
       return;
     }
+
     const uri = editor.document.uri;
-    try {
-      const assets = await parser.detectInDocument(uri);
-      showResultsAndDiagnostics(assets, diagnosticCollection);
-    } catch (err: any) {
-      vscode.window.showErrorMessage(`Error scanning file: ${err.message || err}`);
-    }
-  });
 
-  const scanWorkspaceCmd = vscode.commands.registerCommand('crypto-detector.scanWorkspace', async () => {
-    const output = vscode.window.createOutputChannel('Crypto Detector');
-    output.show(true);
-    try {
-      await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: 'Scanning workspace', cancellable: true },
-        async (progress, token) => {
-          const onProgress = (p: { processed: number; total?: number }) => {
-            progress.report({ message: `Processed ${p.processed}/${p.total ?? '?'}` });
-          };
-          const assets = await parser.scanWorkspace(undefined, undefined, onProgress, token);
-          showResultsAndDiagnostics(assets, diagnosticCollection);
-          const outPath = await parser.writeCbomJson(assets);
-          output.appendLine(`Scan complete — results saved to ${outPath}`);
-          vscode.window.showInformationMessage('Crypto scan complete — cbom.json generated!');
+    vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Scanning ${uri.fsPath.split('/').pop()} for cryptographic algorithms...`,
+        cancellable: false
+      },
+      async (progress) => {
+        progress.report({ message: 'Analyzing file...' });
+
+        try {
+          const results = await parser.detectInDocument(uri);
+          const formatted = formatResults(results);
+          output.appendLine(formatted);
+          output.show(true);
+
+          if (results.length > 0) {
+            await vscode.window.showInformationMessage(
+              `🔐 Detected ${results.length} cryptographic algorithm(s) in file. Generate CBOM file?`,
+              "Yes",
+              "No"
+            ).then(async (choice) => {
+              if (choice === "Yes") {
+                await generateAndDownloadCbom(results);
+              }
+            });
+          } else {
+            vscode.window.showInformationMessage(`✅ No cryptographic algorithms found.`);
+          }
+        } catch (err: any) {
+          vscode.window.showErrorMessage(`Error scanning file: ${err.message}`);
         }
-      );
-    } catch (err: any) {
-      vscode.window.showErrorMessage(`Workspace scan failed: ${err.message || err}`);
-    }
+      }
+    );
   });
 
-  context.subscriptions.push(detectSingle, scanWorkspaceCmd);
-}
-
-function showResultsAndDiagnostics(assets: parser.CryptoAsset[], diagnosticCollection: vscode.DiagnosticCollection) {
-  const output = vscode.window.createOutputChannel('Crypto Detector');
-  output.clear();
-
-  if (assets.length === 0) {
-    output.appendLine('✅ No known cryptographic algorithms found.');
-    diagnosticCollection.clear();
-    output.show(true);
-    return;
-  }
-
-  const diagnosticsByFile: Map<string, vscode.Diagnostic[]> = new Map();
-
-  for (const a of assets) {
-    output.appendLine(`🧩 Algorithm: ${a.name}`);
-    output.appendLine(`   • Occurrences: ${a.occurrences}`);
-    output.appendLine(`   • Quantum Safety: ${a.quantumSafe}`);
-    output.appendLine(`   • Description: ${a.description}`);
-    output.appendLine('──────────────────────────────');
-
-    for (const ctx of a.detectionContexts) {
-      const severity =
-        a.quantumSafe === false
-          ? vscode.DiagnosticSeverity.Error
-          : a.quantumSafe === 'partial'
-          ? vscode.DiagnosticSeverity.Warning
-          : vscode.DiagnosticSeverity.Hint;
-      for (const line of ctx.lineNumbers) {
-        const diag = new vscode.Diagnostic(
-          new vscode.Range(new vscode.Position(line - 1, 0), new vscode.Position(line - 1, 100)),
-          `${a.name} detected — ${a.quantumSafe}`,
-          severity
-        );
-        diag.source = 'crypto-detector';
-        if (!diagnosticsByFile.has(ctx.filePath)) diagnosticsByFile.set(ctx.filePath, []);
-        diagnosticsByFile.get(ctx.filePath)!.push(diag);
-      }
+  /**
+   * Command: Scan entire workspace
+   */
+  const scanWorkspaceCmd = vscode.commands.registerCommand('crypto-detector.scanWorkspace', async () => {
+    if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
+      vscode.window.showWarningMessage('No workspace folder is open.');
+      return;
     }
-  }
 
-  diagnosticCollection.clear();
-  for (const [file, diags] of diagnosticsByFile) {
-    const fileUri = vscode.Uri.file(file);
-    diagnosticCollection.set(fileUri, diags);
-  }
+    vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Scanning entire workspace for cryptographic algorithms...',
+        cancellable: true
+      },
+      async (progress, token) => {
+        let lastProgress: { processed: number; total?: number } | undefined;
 
-  output.show(true);
+        const onProgress = (p: { processed: number; total?: number }): void => {
+          lastProgress = p;
+          const total = p.total ?? 'unknown';
+          progress.report({ message: `Processed ${p.processed}/${total}` });
+        };
+
+        try {
+          const results = await parser.scanWorkspace(onProgress, token);
+          const formatted = formatResults(results);
+          output.appendLine(formatted);
+          output.show(true);
+
+          await vscode.window.showInformationMessage(
+            `✅ Workspace scan complete! Found ${results.length} cryptographic algorithm(s). Generate CBOM file?`,
+            'Yes',
+            'No'
+          ).then(async (choice) => {
+            if (choice === 'Yes') {
+              await generateAndDownloadCbom(results);
+            }
+          });
+
+        } catch (err: any) {
+          vscode.window.showErrorMessage(`Error scanning workspace: ${err.message}`);
+        }
+      }
+    );
+  });
+
+  context.subscriptions.push(scanFileCmd, scanWorkspaceCmd, output);
 }
 
-export function deactivate() {}
+/**
+ * Deactivate cleanup.
+ */
+export function deactivate() {
+  // nothing yet
+}

@@ -1,0 +1,108 @@
+{
+  "python": [
+    {
+      "api": "hashlib.md5",
+      "type": "hash",
+      "quantumSafe": false,
+      "severity": "high",
+      "description": "MD5 is broken and insecure."
+    },
+    {
+      "api": "hashlib.sha1",
+      "type": "hash",
+      "quantumSafe": false,
+      "severity": "high",
+      "description": "SHA-1 is weak and not collision-resistant."
+    },
+    {
+      "api": "hashlib.sha256",
+      "type": "hash",
+      "quantumSafe": "partial",
+      "severity": "medium",
+      "description": "SHA-2 family hash (safe but not quantum-resistant)."
+    },
+    {
+      "api": "hmac.new",
+      "type": "mac",
+      "quantumSafe": "partial",
+      "severity": "low",
+      "description": "HMAC is safe if used with a strong underlying hash."
+    },
+    {
+      "api": "Crypto.PublicKey.RSA",
+      "type": "asymmetric",
+      "quantumSafe": false,
+      "severity": "high",
+      "description": "RSA is insecure against quantum attacks."
+    }
+  ],
+  "java": [
+    {
+      "api": "MessageDigest.getInstance",
+      "type": "hash",
+      "quantumSafe": false,
+      "severity": "high",
+      "description": "Use SHA-256 or higher, SHA-1 and MD5 are deprecated."
+    },
+    {
+      "api": "Cipher.getInstance",
+      "type": "cipher",
+      "quantumSafe": "partial",
+      "severity": "medium",
+      "description": "AES is secure but not quantum-resistant."
+    },
+    {
+      "api": "KeyPairGenerator.getInstance",
+      "type": "keygen",
+      "quantumSafe": false,
+      "severity": "high",
+      "description": "RSA and ECDSA are not quantum-safe."
+    },
+    {
+      "api": "Mac.getInstance",
+      "type": "mac",
+      "quantumSafe": "partial",
+      "severity": "low",
+      "description": "HMAC is safe if the hash is secure."
+    }
+  ],
+  "c": [
+    {
+      "api": "EVP_sha256",
+      "type": "hash",
+      "quantumSafe": "partial",
+      "severity": "medium",
+      "description": "Part of the SHA2 family."
+    },
+    {
+      "api": "EVP_sha1",
+      "type": "hash",
+      "quantumSafe": false,
+      "severity": "high",
+      "description": "SHA-1 is weak."
+    },
+    {
+      "api": "EVP_aes_256_gcm",
+      "type": "cipher",
+      "quantumSafe": "partial",
+      "severity": "medium",
+      "description": "AES-GCM is secure but not quantum-resistant."
+    }
+  ],
+  "cpp": [
+    {
+      "api": "RSA_generate_key_ex",
+      "type": "keygen",
+      "quantumSafe": false,
+      "severity": "high",
+      "description": "RSA is not quantum-safe."
+    },
+    {
+      "api": "EVP_aes_128_gcm",
+      "type": "cipher",
+      "quantumSafe": "partial",
+      "severity": "medium",
+      "description": "AES-128 provides partial post-quantum resistance."
+    }
+  ]
+}
