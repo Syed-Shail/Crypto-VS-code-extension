@@ -1,7 +1,7 @@
 // src/parser/index.ts
 import * as vscode from 'vscode';
 import { DetectorPlugin } from './detector-base';
-import { jsDetector } from './js-detector';
+import { jsDetector } from './js-detector.js';
 import { regexDetector } from './regex-detector';
 import { CryptoAsset } from './types';
 
