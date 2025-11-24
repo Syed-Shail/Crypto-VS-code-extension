@@ -3,7 +3,7 @@ import * as crypto from 'crypto';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { CryptoAsset } from './types.js';
+import { CryptoAsset } from './types';
 
 /* --------------------------------------------------------------------------
  * 🧩 CBOM (Cryptographic Bill of Materials) Report Generator
@@ -20,6 +20,35 @@ export async function writeCbomJson(
     workspaceFolder = folders[0];
   }
 
+  const components = assets.map((a, i) => {
+    const occurrences = (a.detectionContexts ?? []).flatMap(ctx => ctx.lineNumbers ?? []).length > 0
+      ? (a.detectionContexts ?? []).flatMap(ctx => ctx.lineNumbers ?? []).length
+      : a.occurrences ?? 1;
+
+    return {
+      type: 'cryptographic-asset',
+      'bom-ref': a.id ?? `${(a.name ?? 'unknown').toLowerCase()}-${i}`,
+      name: a.name,
+      evidence: {
+        occurrences: (a.detectionContexts ?? []).map(ctx => ({
+          location: ctx.filePath,
+          lineNumbers: ctx.lineNumbers,
+          snippet: ctx.snippet
+        }))
+      },
+      cryptoProperties: {
+        assetType: a.assetType ?? 'algorithm',
+        algorithmProperties: {
+          primitive: a.primitive ?? a.type ?? 'unknown',
+          cryptoFunctions: [a.description ?? 'unknown']
+        },
+        quantumSafe: a.quantumSafe ?? 'unknown',
+        severity: a.severity ?? 'unknown',
+        riskScore: a.riskScore ?? a.score ?? 0
+      }
+    };
+  });
+
   const cbom = {
     bomFormat: 'CycloneDX',
     specVersion: '1.6',
@@ -35,28 +64,7 @@ export async function writeCbomJson(
         }
       ]
     },
-    components: assets.map((a, i) => ({
-      type: 'cryptographic-asset',
-      'bom-ref': `${a.id}-${i}`,
-      name: a.name,
-      evidence: {
-        occurrences: a.detectionContexts.map(ctx => ({
-          location: ctx.filePath,
-          lineNumbers: ctx.lineNumbers,
-          snippet: ctx.snippet
-        }))
-      },
-      cryptoProperties: {
-        assetType: a.assetType,
-        algorithmProperties: {
-          primitive: a.primitive,
-          cryptoFunctions: [a.description || 'unknown']
-        },
-        quantumSafe: a.quantumSafe,
-        severity: a.severity ?? 'unknown',
-        riskScore: a.riskScore ?? 0
-      }
-    })),
+    components,
     statistics: {
       totalDetected: assets.length,
       highRisk: assets.filter(a => a.severity === 'high').length,

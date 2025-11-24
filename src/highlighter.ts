@@ -1,6 +1,6 @@
 // src/highlighter.ts
 import * as vscode from 'vscode';
-import { CryptoAsset } from './parser/types.js';
+import { CryptoAsset } from './parser/types';
 
 /**
  * Highlighter: maintain decorations and hover info per open editor.
@@ -156,11 +156,11 @@ function makeTooltipForAsset(a: CryptoAsset): vscode.MarkdownString {
   const md = new vscode.MarkdownString(undefined, true);
   md.appendCodeblock(`${a.name}`, 'text');
   const severity = (a.severity ?? 'unknown').toUpperCase();
-  const score = a.riskScore ?? 0;
+  const score = a.riskScore ?? a.score ?? 0;
   md.appendMarkdown(`**Severity:** ${severity} · **Risk Score:** ${score}\n\n`);
   md.appendMarkdown(`**Quantum-safe:** \`${String(a.quantumSafe)}\`\n\n`);
   if (a.description) md.appendMarkdown(`**Note:** ${a.description}\n\n`);
-  md.appendMarkdown(`**Occurrences:** ${a.occurrences}\n\n`);
+  md.appendMarkdown(`**Occurrences:** ${a.occurrences ?? 1}\n\n`);
   md.isTrusted = true;
   return md;
 }
@@ -239,6 +239,7 @@ export async function applyHighlights(assets: CryptoAsset[]) {
   fileAssetCache.clear();
   for (const a of assets) {
     for (const ctx of a.detectionContexts ?? []) {
+      if (!ctx.filePath) continue;               // <- guard undefined
       const fp = ctx.filePath;
       const arr = fileAssetCache.get(fp) ?? [];
       // avoid duplicates by id

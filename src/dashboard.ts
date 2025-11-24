@@ -1,5 +1,5 @@
 // src/dashboard.ts
-import { CryptoAsset } from './parser/types.js';
+import { CryptoAsset } from './parser/types';
 
 /**
  * Builds the HTML dashboard view with multiple charts and a summary table.
@@ -21,7 +21,7 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
   });
 
   // Top 5 by risk
-  const topRisk = [...assets].sort((a, b) => (b.riskScore ?? 0) - (a.riskScore ?? 0)).slice(0, 5);
+  const topRisk = [...assets].sort((a, b) => (b.riskScore ?? b.score ?? 0) - (a.riskScore ?? a.score ?? 0)).slice(0, 5);
 
   // Pre-build rows for the initial table (server-side)
   const initialRows = assets.map(a =>
@@ -238,7 +238,7 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
           labels: topRisk.map(r => r.name),
           datasets: [{
             label: 'Risk Score',
-            data: topRisk.map(r => r.riskScore),
+            data: topRisk.map(r => r.riskScore ?? r.score ?? 0),
             backgroundColor: '#f85149'
           }]
         },

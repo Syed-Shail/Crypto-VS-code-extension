@@ -14,11 +14,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:crypto-detector.detectCrypto",
-    "onCommand:crypto-detector.scanWorkspace",
-    "onCommand:crypto-detector.exportCbom"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -36,6 +32,14 @@
         "command": "crypto-detector.exportCbom",
         "title": "Crypto Detector: Export CBOM (cbom.json)",
         "category": "Crypto Detector"
+      },
+      {
+        "command": "crypto-detector.scanGithubRepo",
+        "title": "Crypto Detector: Scan GitHub Repository"
+      },
+      {
+        "command": "crypto-detector.showDashboard",
+        "title": "Crypto Detector: Show Dashboard"
       }
     ],
     "configuration": {
@@ -74,6 +78,7 @@
   "devDependencies": {
     "@babel/parser": "^7.28.5",
     "@babel/traverse": "^7.28.5",
+    "@electron/rebuild": "^4.0.1",
     "@types/node": "^18.19.130",
     "@types/vscode": "^1.105.0",
     "ts-node": "^10.9.2",
@@ -81,10 +86,8 @@
   },
   "dependencies": {
     "chart.js": "^4.5.1",
-    "tree-sitter": "^0.22.4",
-    "tree-sitter-c": "^0.20.3",
-    "tree-sitter-cpp": "^0.20.0",
-    "tree-sitter-java": "github:tree-sitter/tree-sitter-java",
-    "tree-sitter-python": "^0.20.1"
+    "simple-git": "^3.30.0",
+    "tree-sitter-javascript": "^0.25.0",
+    "web-tree-sitter": "^0.25.10"
   }
 }

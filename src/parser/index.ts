@@ -1,59 +1,136 @@
 // src/parser/index.ts
+
 import * as vscode from 'vscode';
-import { DetectorPlugin } from './detector-base';
-import { jsDetector } from './js-detector.js';
-import { regexDetector } from './regex-detector';
 import { CryptoAsset } from './types';
+import { regexDetector } from './regex-detector';
+import { detectMultiLang } from './multilang-detector';
 
-const plugins: DetectorPlugin[] = [
-  jsDetector,
-  regexDetector
-];
+/**
+ * Merge results from regex and AST detectors.
+ * Deduplicates by (name, primitive, assetType, filePath, line).
+ */
+function mergeResults(a: CryptoAsset[], b: CryptoAsset[]): CryptoAsset[] {
+  const merged: CryptoAsset[] = [];
+  const seen = new Set<string>();
 
-function pluginForUri(uri: vscode.Uri): DetectorPlugin | undefined {
-  const ext = (uri.fsPath.match(/\.[^.]+$/) || [''])[0].toLowerCase();
-  // prefer exact extension plugin
-  for (const p of plugins) {
-    if (p.extensions && p.extensions.includes(ext)) return p;
+  const all = [...a, ...b];
+
+  for (const r of all) {
+    const file = r.detectionContexts?.[0]?.filePath ?? '';
+    const line = r.detectionContexts?.[0]?.lineNumbers?.[0] ?? 0;
+    const key = `${r.name}|${r.primitive}|${r.assetType}|${file}|${line}`;
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      merged.push(r);
+    }
   }
-  // fallback by language id
+
+  return merged;
+}
+
+/**
+ * Detect crypto in a single document.
+ * - Always uses regexDetector
+ * - Uses detectMultiLang (WASM AST) when possible
+ */
+export async function detectInDocument(
+  uri: vscode.Uri
+): Promise<CryptoAsset[]> {
   try {
-    const doc = vscode.workspace.openTextDocument(uri);
-    // note: openTextDocument returns Promise — don't await here; callers will call detectInDocument which is async
-  } catch {}
-  // fallback to regex detector
-  return regexDetector;
+    const [regexResults, astResults] = await Promise.all([
+      regexDetector.detectInDocument(uri),
+      detectMultiLang(uri).catch(err => {
+        console.warn(
+          '[MULTILANG-WASM] AST detection failed, using regex only:',
+          err
+        );
+        return [];
+      })
+    ]);
+
+    return mergeResults(regexResults, astResults);
+  } catch (err) {
+    console.error('[detectInDocument] Error:', err);
+    return [];
+  }
 }
 
-export async function detectInDocument(uri: vscode.Uri): Promise<CryptoAsset[]> {
-  const plugin = pluginForUri(uri) || regexDetector;
-  return plugin.detectInDocument(uri);
-}
+/**
+ * Scan the entire workspace using regex + AST.
+ */
+export async function scanWorkspace(
+  onProgress: (p: { processed: number; total?: number }) => void,
+  token: vscode.CancellationToken
+): Promise<CryptoAsset[]> {
+  const folders = vscode.workspace.workspaceFolders;
+  if (!folders || folders.length === 0) {
+    return [];
+  }
 
-export async function scanWorkspace(onProgress?: (p: { processed: number; total?: number }) => void, token?: vscode.CancellationToken): Promise<CryptoAsset[]> {
-  const files = await vscode.workspace.findFiles('**/*.{js,jsx,ts,tsx,py,java,cpp,c,rs,go}', '**/node_modules/**');
+  const patterns = [
+    '**/*.py',
+    '**/*.java',
+    '**/*.c',
+    '**/*.cpp',
+    '**/*.go',
+    '**/*.rs',
+    '**/*.txt',
+    '**/*.cfg',
+    '**/*.conf',
+    '**/*.yml',
+    '**/*.yaml',
+    '**/*.json'
+  ];
+
+  const exclude =
+    '{**/node_modules/**,**/.git/**,**/dist/**,**/out/**,**/build/**}';
+
+  let files: vscode.Uri[] = [];
+
+  for (const pattern of patterns) {
+    if (token.isCancellationRequested) break;
+    const uris = await vscode.workspace.findFiles(pattern, exclude);
+    files.push(...uris);
+  }
+
+  // De-duplicate
+  const seenPaths = new Set<string>();
+  files = files.filter(u => {
+    const key = u.fsPath.toLowerCase();
+    if (seenPaths.has(key)) return false;
+    seenPaths.add(key);
+    return true;
+  });
+
   const total = files.length;
-  const aggregated: Record<string, CryptoAsset> = {};
   let processed = 0;
+  let allResults: CryptoAsset[] = [];
 
   for (const uri of files) {
-    if (token?.isCancellationRequested) break;
+    if (token.isCancellationRequested) break;
+
     try {
-      const plugin = pluginForUri(uri) || regexDetector;
-      const assets = await plugin.detectInDocument(uri);
-      for (const a of assets) {
-        if (!aggregated[a.id]) aggregated[a.id] = { ...a };
-        else {
-          aggregated[a.id].occurrences += a.occurrences;
-          aggregated[a.id].detectionContexts.push(...a.detectionContexts);
-        }
-      }
+      const [regexResults, astResults] = await Promise.all([
+        regexDetector.detectInDocument(uri),
+        detectMultiLang(uri).catch(err => {
+          console.warn(
+            '[MULTILANG-WASM] AST detection failed during workspace scan:',
+            err
+          );
+          return [];
+        })
+      ]);
+
+      const merged = mergeResults(regexResults, astResults);
+      allResults = allResults.concat(merged);
     } catch (err) {
-      // ignore file errors
+      console.error('[scanWorkspace] Error scanning file:', uri.fsPath, err);
     }
+
     processed++;
-    onProgress?.({ processed, total });
+    onProgress({ processed, total });
   }
 
-  return Object.values(aggregated);
+  return allResults;
 }

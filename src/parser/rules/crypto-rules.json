@@ -1,34 +1,53 @@
 {
   "python": [
-    { "api": "hashlib.md5", "type": "hash", "quantumSafe": false, "description": "MD5 is broken and insecure." },
-    { "api": "hashlib.sha1", "type": "hash", "quantumSafe": false, "description": "SHA-1 is weak and deprecated." },
-    { "api": "hashlib.sha256", "type": "hash", "quantumSafe": "partial", "description": "SHA2 family hash (partial resistance)." },
-    { "api": "hashlib.sha512", "type": "hash", "quantumSafe": "partial", "description": "SHA2 family hash (partial resistance)." },
-    { "api": "Crypto.PublicKey.RSA", "type": "asymmetric", "quantumSafe": false, "description": "RSA is not quantum-safe." },
-    { "api": "Crypto.PublicKey.ECC", "type": "asymmetric", "quantumSafe": false, "description": "ECC is not quantum-safe." },
-    { "api": "Kyber", "type": "post-quantum", "quantumSafe": true, "description": "Kyber is a quantum-safe key exchange." },
-    { "api": "Dilithium", "type": "post-quantum", "quantumSafe": true, "description": "Dilithium is a quantum-safe digital signature." },
-    { "api": "Falcon", "type": "post-quantum", "quantumSafe": true, "description": "Falcon is a lattice-based post-quantum signature." },
-    { "api": "SPHINCS", "type": "post-quantum", "quantumSafe": true, "description": "SPHINCS+ is a hash-based post-quantum signature scheme." }
+    { "api": "hashlib.md5", "type": "hash", "quantumSafe": false, "severity": "high", "description": "MD5 is broken and insecure. Avoid using it.", "recommendation": "Use SHA3 or BLAKE2 instead." },
+    { "api": "hashlib.sha1", "type": "hash", "quantumSafe": false, "severity": "medium", "description": "SHA-1 is weak and deprecated.", "recommendation": "Use SHA-256, SHA-3, or BLAKE2." },
+    { "api": "hashlib.sha224", "type": "hash", "quantumSafe": "partial", "severity": "low", "description": "SHA2 family hash (partial quantum resistance).", "recommendation": "Prefer SHA3 or post-quantum alternatives." },
+    { "api": "hashlib.sha256", "type": "hash", "quantumSafe": "partial", "severity": "low", "description": "SHA2 family hash (partial resistance).", "recommendation": "Use SHA3 or BLAKE2." },
+    { "api": "hashlib.sha512", "type": "hash", "quantumSafe": "partial", "severity": "low", "description": "SHA2 family hash (partial resistance).", "recommendation": "Upgrade to SHA3-512 or BLAKE2b." },
+    { "api": "hashlib.sha3_256", "type": "hash", "quantumSafe": "partial", "severity": "low", "description": "SHA3 hash function (better post-quantum security).", "recommendation": "SHA3 is preferred over SHA2." },
+    { "api": "hashlib.blake2b", "type": "hash", "quantumSafe": "partial", "severity": "low", "description": "BLAKE2b is a modern, efficient hash function.", "recommendation": "Safe for most modern use cases." },
+    { "api": "hmac.new", "type": "auth", "quantumSafe": "partial", "severity": "medium", "description": "HMAC is a MAC-based authentication mechanism.", "recommendation": "Ensure strong underlying hash like SHA3." },
+    { "api": "Crypto.Cipher.AES", "type": "symmetric", "quantumSafe": "partial", "severity": "low", "description": "AES is secure but not fully quantum-safe.", "recommendation": "Use AES-256 in GCM or SIV mode." },
+    { "api": "Crypto.Cipher.Blowfish", "type": "symmetric", "quantumSafe": false, "severity": "high", "description": "Blowfish is outdated and insecure.", "recommendation": "Use AES-GCM or ChaCha20 instead." },
+    { "api": "Crypto.Cipher.ChaCha20", "type": "symmetric", "quantumSafe": "partial", "severity": "low", "description": "ChaCha20 is efficient and secure for modern systems.", "recommendation": "Good for software encryption." },
+    { "api": "Crypto.PublicKey.RSA", "type": "asymmetric", "quantumSafe": false, "severity": "high", "description": "RSA is not quantum-safe.", "recommendation": "Use hybrid RSA+Kyber or post-quantum algorithms." },
+    { "api": "Crypto.PublicKey.ECC", "type": "asymmetric", "quantumSafe": false, "severity": "medium", "description": "ECC (ECDSA/ECDH) is not quantum-safe.", "recommendation": "Use Ed25519 or post-quantum alternatives." },
+    { "api": "Crypto.PublicKey.Ed25519", "type": "asymmetric", "quantumSafe": "partial", "severity": "low", "description": "Ed25519 is fast and secure but not quantum-resistant.", "recommendation": "Good for near-term cryptography." },
+    { "api": "Crypto.PublicKey.X25519", "type": "key-exchange", "quantumSafe": "partial", "severity": "low", "description": "Curve25519-based key exchange.", "recommendation": "Use Kyber for quantum safety." },
+    { "api": "Kyber", "type": "post-quantum", "quantumSafe": true, "severity": "none", "description": "Kyber is a quantum-safe key exchange.", "recommendation": "Recommended for post-quantum readiness." },
+    { "api": "Dilithium", "type": "post-quantum", "quantumSafe": true, "severity": "none", "description": "Dilithium is a quantum-safe digital signature scheme.", "recommendation": "Recommended for quantum-safe signatures." },
+    { "api": "Falcon", "type": "post-quantum", "quantumSafe": true, "severity": "none", "description": "Falcon is a lattice-based post-quantum signature.", "recommendation": "Use in hybrid deployments with ECDSA." },
+    { "api": "SPHINCS+", "type": "post-quantum", "quantumSafe": true, "severity": "none", "description": "SPHINCS+ is a stateless hash-based signature.", "recommendation": "Reliable fallback for post-quantum signing." },
+    { "api": "Hybrid.RSA_Kyber", "type": "hybrid", "quantumSafe": "true", "severity": "none", "description": "Hybrid RSA + Kyber for transitional security.", "recommendation": "Use for migration to post-quantum." }
   ],
 
   "java": [
-    { "api": "MessageDigest.getInstance", "type": "hash", "quantumSafe": "partial", "description": "SHA2 or SHA3 recommended." },
-    { "api": "Cipher.getInstance", "type": "cipher", "quantumSafe": "partial", "description": "AES is secure but not fully quantum-safe." },
-    { "api": "KeyPairGenerator.getInstance", "type": "asymmetric", "quantumSafe": false, "description": "RSA/ECDSA are not quantum-safe." }
+    { "api": "MessageDigest.getInstance", "type": "hash", "quantumSafe": "partial", "severity": "low", "description": "Hash function (SHA2, SHA3, etc).", "recommendation": "Use SHA3 or BLAKE2 for stronger security." },
+    { "api": "Cipher.getInstance", "type": "cipher", "quantumSafe": "partial", "severity": "low", "description": "Symmetric cipher (AES, ChaCha20, etc).", "recommendation": "Prefer AES-GCM or ChaCha20-Poly1305." },
+    { "api": "KeyPairGenerator.getInstance", "type": "asymmetric", "quantumSafe": false, "severity": "high", "description": "RSA/ECDSA are not quantum-safe.", "recommendation": "Adopt hybrid or post-quantum key algorithms." },
+    { "api": "HmacSHA256", "type": "auth", "quantumSafe": "partial", "severity": "medium", "description": "HMAC-SHA256 authentication code.", "recommendation": "Use HMAC-SHA3 for enhanced security." },
+    { "api": "ChaCha20-Poly1305", "type": "cipher", "quantumSafe": "partial", "severity": "low", "description": "ChaCha20-Poly1305 AEAD cipher.", "recommendation": "Secure and fast for mobile and network use." }
   ],
 
   "c": [
-    { "api": "EVP_md5", "type": "hash", "quantumSafe": false, "description": "MD5 is insecure." },
-    { "api": "EVP_sha256", "type": "hash", "quantumSafe": "partial", "description": "SHA2 family hash (partial resistance)." },
-    { "api": "EVP_aes_256_gcm", "type": "cipher", "quantumSafe": "partial", "description": "AES GCM is secure but not fully quantum-safe." },
-    { "api": "RSA_generate_key_ex", "type": "asymmetric", "quantumSafe": false, "description": "RSA is vulnerable to quantum attacks." }
+    { "api": "EVP_md5", "type": "hash", "quantumSafe": false, "severity": "high", "description": "MD5 is insecure.", "recommendation": "Avoid. Use SHA3 or BLAKE2." },
+    { "api": "EVP_sha1", "type": "hash", "quantumSafe": false, "severity": "medium", "description": "SHA-1 is deprecated.", "recommendation": "Use SHA3 or stronger hash." },
+    { "api": "EVP_sha256", "type": "hash", "quantumSafe": "partial", "severity": "low", "description": "SHA2 family hash (partial resistance).", "recommendation": "Prefer SHA3." },
+    { "api": "EVP_sha3_512", "type": "hash", "quantumSafe": "partial", "severity": "low", "description": "SHA3 hash with stronger collision resistance.", "recommendation": "Use for new systems." },
+    { "api": "EVP_aes_256_gcm", "type": "cipher", "quantumSafe": "partial", "severity": "low", "description": "AES GCM is secure but not quantum-safe.", "recommendation": "Combine with PQ key exchange for full safety." },
+    { "api": "EVP_chacha20_poly1305", "type": "cipher", "quantumSafe": "partial", "severity": "low", "description": "ChaCha20-Poly1305 AEAD cipher.", "recommendation": "Modern and efficient alternative to AES." },
+    { "api": "RSA_generate_key_ex", "type": "asymmetric", "quantumSafe": false, "severity": "high", "description": "RSA is vulnerable to quantum attacks.", "recommendation": "Use hybrid RSA+Kyber or switch to PQ schemes." },
+    { "api": "EVP_PKEY_new_raw_private_key", "type": "keygen", "quantumSafe": false, "severity": "medium", "description": "Private key generation for non-PQ algorithms.", "recommendation": "Migrate to Kyber/Dilithium." }
   ],
 
   "cpp": [
-    { "api": "EVP_aes_128_gcm", "type": "cipher", "quantumSafe": "partial", "description": "AES-128 GCM is partially quantum-resistant." },
-    { "api": "RSA_generate_key_ex", "type": "keygen", "quantumSafe": false, "description": "RSA key generation is not quantum-safe." },
-    { "api": "SHA512", "type": "hash", "quantumSafe": "partial", "description": "SHA2 family hash." },
-    { "api": "Kyber", "type": "post-quantum", "quantumSafe": true, "description": "Quantum-safe key exchange." }
+    { "api": "EVP_aes_128_gcm", "type": "cipher", "quantumSafe": "partial", "severity": "low", "description": "AES-128 GCM is partially quantum-resistant.", "recommendation": "Prefer AES-256 or ChaCha20." },
+    { "api": "EVP_aes_256_gcm", "type": "cipher", "quantumSafe": "partial", "severity": "low", "description": "AES-256 GCM encryption.", "recommendation": "Strong, but not quantum-safe." },
+    { "api": "RSA_generate_key_ex", "type": "keygen", "quantumSafe": false, "severity": "high", "description": "RSA key generation is not quantum-safe.", "recommendation": "Use post-quantum key exchange." },
+    { "api": "EVP_sha512", "type": "hash", "quantumSafe": "partial", "severity": "low", "description": "SHA2 family hash.", "recommendation": "Use SHA3 or BLAKE2." },
+    { "api": "Kyber", "type": "post-quantum", "quantumSafe": true, "severity": "none", "description": "Quantum-safe key exchange.", "recommendation": "Recommended for modern secure systems." },
+    { "api": "Dilithium", "type": "post-quantum", "quantumSafe": true, "severity": "none", "description": "Post-quantum signature scheme.", "recommendation": "Use for digital signing." },
+    { "api": "Falcon", "type": "post-quantum", "quantumSafe": true, "severity": "none", "description": "Post-quantum lattice signature.", "recommendation": "Alternative to Dilithium." }
   ]
 }

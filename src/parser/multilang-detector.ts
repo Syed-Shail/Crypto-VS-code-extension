@@ -1,95 +1,112 @@
 // src/parser/multilang-detector.ts
+import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
+import { CryptoAsset, Severity } from "./types";
+import { assignRisk } from "./risk-utils";
+import { getParserForExtension } from "./ts-wasm";
 
-import * as vscode from 'vscode';
-import Parser from 'tree-sitter';
-import Python from 'tree-sitter-python';
-import Java from 'tree-sitter-java';
-import C from 'tree-sitter-c';
-import Cpp from 'tree-sitter-cpp';
-import * as fs from 'fs';
-import * as path from 'path';
-import { CryptoAsset } from './types.js';
-import { assignRisk } from './risk-utils.js';
+const rulesPath = path.join(__dirname, "rules", "crypto-rules.json");
+const CRYPTO_RULES = JSON.parse(fs.readFileSync(rulesPath, "utf8"));
 
-/* --------------------------------------------------------------------------
- * 🌍 Supported Language Parsers
- * -------------------------------------------------------------------------- */
-const LANGUAGE_PARSERS: Record<string, any> = {
-  '.py': Python,
-  '.java': Java,
-  '.c': C,
-  '.cpp': Cpp
-};
+function escapeRegExp(str: string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
-/* --------------------------------------------------------------------------
- * 📘 Load Crypto Rules (JSON database)
- * -------------------------------------------------------------------------- */
-const rulesPath = path.join(__dirname, 'rules', 'crypto-rules.json');
-const CRYPTO_RULES = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
-
-/* --------------------------------------------------------------------------
- * 🧠 Multi-language Crypto Detector
- * -------------------------------------------------------------------------- */
 export async function detectMultiLang(uri: vscode.Uri): Promise<CryptoAsset[]> {
   const ext = path.extname(uri.fsPath);
-  const parserClass = LANGUAGE_PARSERS[ext];
-  if (!parserClass) return [];
+  const parserInfo = await getParserForExtension(ext).catch(() => null);
 
-  const langKey = ext.replace('.', '');
+  if (!parserInfo) return [];
+
+  const { langKey, parser } = parserInfo;
   const langRules = CRYPTO_RULES[langKey] || [];
 
   const doc = await vscode.workspace.openTextDocument(uri);
   const text = doc.getText();
-
-  const parser = new Parser();
-  parser.setLanguage(parserClass);
-
   const tree = parser.parse(text);
+
   const results: CryptoAsset[] = [];
 
-  /* ----------------------------------------------------------------------
-   * 🔍 Walk the AST nodes and match against crypto rules
-   * ---------------------------------------------------------------------- */
   function walk(node: any) {
     const snippet = text.slice(node.startIndex, node.endIndex);
 
     for (const rule of langRules) {
-      if (snippet.includes(rule.api)) {
-        const line = text.substring(0, node.startIndex).split('\n').length;
+      const pattern = new RegExp(`\\b${escapeRegExp(rule.name)}\\b`, "i");
 
-        // 🔹 Use risk engine to assign real risk levels
-        const { severity, score, explanation } = assignRisk(rule.quantumSafe, rule.type, rule.api);
-
-        console.log(
-          `🧠 Risk assigned for ${rule.api} [${rule.type}] — Severity: ${severity}, Risk: ${score}`
-        );
+      if (pattern.test(snippet)) {
+        const line = text.substring(0, node.startIndex).split("\n").length || 1;
+        const risk = assignRisk(rule.quantumSafe, rule.type ?? rule.primitive, rule.name);
 
         results.push({
-          id: `${langKey}:${rule.api}`,
-          assetType: 'algorithm',
-          primitive: rule.type,
-          name: rule.api,
+          name: rule.name,
+          type: rule.type ?? rule.primitive,
+          primitive: rule.primitive ?? rule.type,
+          assetType: "algorithm",
+          description: rule.description ?? "",
           quantumSafe: rule.quantumSafe,
-          description: `${rule.description || 'Detected cryptographic algorithm'} — ${explanation}`,
-          detectionContexts: [
-            { filePath: uri.fsPath, lineNumbers: [line], snippet }
-          ],
+          severity: risk.severity as Severity,
+          score: risk.score,
+          riskScore: risk.score,
+          reason: risk.explanation,
+          source: uri.fsPath,
+          line,
           occurrences: 1,
-          severity,
-          riskScore: score
+          id: `ast:${(rule.name || 'unknown').toLowerCase()}-${line}`,
+          detectionContexts: [
+            {
+              filePath: uri.fsPath,
+              lineNumbers: [line],
+              snippet: snippet.substring(0, 300)
+            }
+          ]
         });
       }
     }
 
-    // Recursively visit all child nodes
     for (let i = 0; i < node.childCount; i++) {
       walk(node.child(i));
     }
   }
 
   walk(tree.rootNode);
-  console.log(
-    `📦 [MULTILANG] Scan complete for ${path.basename(uri.fsPath)} — Found ${results.length} algorithms`
-  );
+
+  // Text fallback (missed AST nodes)
+  for (const rule of langRules) {
+    const re = new RegExp(`\\b${escapeRegExp(rule.name)}\\b`, "gi");
+    let match: RegExpExecArray | null;
+
+    while ((match = re.exec(text)) !== null) {
+      const index = match.index;
+      const line = text.substring(0, index).split("\n").length || 1;
+      const risk = assignRisk(rule.quantumSafe, rule.type ?? rule.primitive, rule.name);
+      const snippet = text.substr(index, 200);
+
+      results.push({
+        name: rule.name,
+        type: rule.type ?? rule.primitive,
+        primitive: rule.primitive ?? rule.type,
+        assetType: "algorithm",
+        description: rule.description ?? "",
+        quantumSafe: rule.quantumSafe,
+        severity: risk.severity as Severity,
+        score: risk.score,
+        riskScore: risk.score,
+        reason: risk.explanation,
+        source: uri.fsPath,
+        line,
+        occurrences: 1,
+        id: `text:${(rule.name || 'unknown').toLowerCase()}-${line}`,
+        detectionContexts: [
+          {
+            filePath: uri.fsPath,
+            lineNumbers: [line],
+            snippet
+          }
+        ]
+      });
+    }
+  }
+
   return results;
 }
