@@ -1,12 +1,11 @@
 // src/extension.ts
 
 import * as vscode from 'vscode';
-import { detectAll } from './parser/detector-orchestrator';
+import * as parser from './parser/index';
 import { CryptoAsset } from './parser/types';
 import { generateAndDownloadCbom } from './parser/report-writer';
 import * as highlighter from './highlighter';
 import { getDashboardHtml } from './dashboard';
-import { scanGithubRepo } from './commands/scanGithubRepo';
 
 /**
  * Formats the detected crypto assets for display in VS Code output.
@@ -27,7 +26,6 @@ function formatResults(results: CryptoAsset[]): string {
     let color = '🟩';
     if (severity === 'medium') color = '🟧';
     else if (severity === 'high') color = '🟥';
-    else if (severity === 'none') color = '🟦';
     else if (severity === 'unknown') color = '⚪';
 
     output += `${color} ${name} (${primitive}) — Severity: ${severity.toUpperCase()} (Risk Score: ${risk})\n`;
@@ -56,19 +54,11 @@ function formatResults(results: CryptoAsset[]): string {
 export function activate(context: vscode.ExtensionContext) {
   const output = vscode.window.createOutputChannel('Crypto Detector');
 
-  /* --------------------------------------------------------------------------
-   * 🧠 Register Commands
-   * -------------------------------------------------------------------------- */
-
-  // 🔹 GitHub repo scanner
-  const scanGithubCmd = vscode.commands.registerCommand('crypto-detector.scanGithubRepo', scanGithubRepo);
-  context.subscriptions.push(scanGithubCmd);
-
-  // 🔹 Inline highlighter & hover provider
+  // ✅ Register the inline highlighter and hover provider
   context.subscriptions.push(highlighter.registerHighlighter(context));
 
   /**
-   * 🔍 Command: Scan current file
+   * Command: Scan current file
    */
   const scanFileCmd = vscode.commands.registerCommand('crypto-detector.detectCrypto', async () => {
     const editor = vscode.window.activeTextEditor;
@@ -89,29 +79,25 @@ export function activate(context: vscode.ExtensionContext) {
         progress.report({ message: 'Analyzing file...' });
 
         try {
-          // ✅ Use unified detector (AST + Regex)
-          const results = await detectAll(uri);
-
-          // Highlight results
+          const results = await parser.detectInDocument(uri);
           await highlighter.applyHighlights(results);
 
-          // Format and display
           const formatted = formatResults(results);
           output.appendLine(formatted);
           output.show(true);
 
-          // Prompt for CBOM generation
           if (results.length > 0) {
-            const choice = await vscode.window.showInformationMessage(
+            await vscode.window.showInformationMessage(
               `🔐 Detected ${results.length} cryptographic algorithm(s) in file. Generate CBOM file?`,
-              'Yes',
-              'No'
-            );
-            if (choice === 'Yes') {
-              await generateAndDownloadCbom(results);
-            }
+              "Yes",
+              "No"
+            ).then(async (choice) => {
+              if (choice === "Yes") {
+                await generateAndDownloadCbom(results);
+              }
+            });
           } else {
-            vscode.window.showInformationMessage('✅ No cryptographic algorithms found.');
+            vscode.window.showInformationMessage(`✅ No cryptographic algorithms found.`);
           }
         } catch (err: any) {
           vscode.window.showErrorMessage(`Error scanning file: ${err.message}`);
@@ -121,7 +107,7 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   /**
-   * 🌍 Command: Scan entire workspace
+   * Command: Scan entire workspace
    */
   const scanWorkspaceCmd = vscode.commands.registerCommand('crypto-detector.scanWorkspace', async () => {
     if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
@@ -136,52 +122,40 @@ export function activate(context: vscode.ExtensionContext) {
         cancellable: true
       },
       async (progress, token) => {
-        let processed = 0;
-
-        const files = await vscode.workspace.findFiles('**/*.{py,java,c,cpp,go,rs,txt,cfg,conf,yml,yaml,json}', '**/node_modules/**');
-        const total = files.length;
-
-        for (const file of files) {
-          if (token.isCancellationRequested) break;
-          progress.report({ message: `Analyzing ${++processed}/${total}: ${file.fsPath.split('/').pop()}` });
-        }
+        const onProgress = (p: { processed: number; total?: number }): void => {
+          const total = p.total ?? 'unknown';
+          progress.report({ message: `Processed ${p.processed}/${total}` });
+        };
 
         try {
-          const allResults: CryptoAsset[] = [];
+          const results = await parser.scanWorkspace(onProgress, token);
+          await highlighter.applyHighlights(results);
 
-          // Scan all files with unified detector
-          for (const file of files) {
-            if (token.isCancellationRequested) break;
-            const results = await detectAll(file);
-            allResults.push(...results);
-          }
-
-          await highlighter.applyHighlights(allResults);
-
-          const formatted = formatResults(allResults);
+          const formatted = formatResults(results);
           output.appendLine(formatted);
           output.show(true);
-
-          if (allResults.length === 0) {
+          
+          if (results.length === 0) {
             vscode.window.showInformationMessage('✅ No cryptographic algorithms found in workspace.');
             return;
           }
 
-          // 🧠 Display interactive dashboard
+          // Show Dashboard View automatically after scan
           const panel = vscode.window.createWebviewPanel(
             'cryptoDashboard',
             'Crypto Risk Dashboard',
             vscode.ViewColumn.One,
             { enableScripts: true, retainContextWhenHidden: true }
           );
-          panel.webview.html = getDashboardHtml(allResults);
+          panel.webview.html = getDashboardHtml(results);
 
-          // Listen for button clicks inside the WebView
+          // Listen for button clicks from inside the WebView
           panel.webview.onDidReceiveMessage(async (message) => {
             if (message.command === 'generateCbom') {
-              await generateAndDownloadCbom(allResults);
+              await generateAndDownloadCbom(results);
             }
           });
+
         } catch (err: any) {
           vscode.window.showErrorMessage(`Error scanning workspace: ${err.message}`);
         }
@@ -190,7 +164,7 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   /**
-   * 📊 Command: Manually open dashboard
+   * Command: Manually show dashboard
    */
   const showDashboardCmd = vscode.commands.registerCommand('crypto-detector.showDashboard', async () => {
     const panel = vscode.window.createWebviewPanel(
@@ -203,13 +177,9 @@ export function activate(context: vscode.ExtensionContext) {
     panel.webview.html = getDashboardHtml([]);
   });
 
-  // Register all commands and output
   context.subscriptions.push(scanFileCmd, scanWorkspaceCmd, showDashboardCmd, output);
 }
 
-/**
- * 🧹 Deactivate cleanup.
- */
 export function deactivate() {
-  // no cleanup needed yet
+  // Cleanup if needed
 }

@@ -1,33 +1,21 @@
 {
   "compilerOptions": {
-    /* Language and environment */
-    "target": "ES2022",
-    "module": "Node16",
-    "lib": ["ES2022"],
-
-    /* Output settings */
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
     "rootDir": "src",
     "outDir": "out",
     "sourceMap": true,
-
-    /* VS Code extension compatibility */
-    "moduleResolution": "node16",
-    "types": ["node", "vscode"],
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-
-    /* Strictness */
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "typeRoots": ["./src", "./node_modules/@types"]
-
-    /* Optional additional checks (uncomment if you want stricter builds)
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUnusedParameters": true
-    */
+    "types": ["node", "vscode"],
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": false
   },
-  "include": ["src"],
-  "exclude": ["node_modules", ".vscode-test"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", ".vscode-test", "out"]
 }
