@@ -1,138 +1,178 @@
 // src/parser/index.ts
-
 import * as vscode from 'vscode';
-import { CryptoAsset } from './types';
+import { jsDetector } from './js-detector';
 import { regexDetector } from './regex-detector';
-import { detectMultiLang } from './multilang-detector';
+import { CryptoAsset } from './types';
+import * as path from 'path';
+
+// Import DetectorPlugin type
+import type { DetectorPlugin } from './detector-base';
+
+// Unified plugin registry
+const plugins: DetectorPlugin[] = [
+  jsDetector,
+  regexDetector
+];
 
 /**
- * Merge results from regex and AST detectors.
- * Deduplicates by (name, primitive, assetType, filePath, line).
+ * File extensions that should NOT be scanned (data files, configs, etc.)
  */
-function mergeResults(a: CryptoAsset[], b: CryptoAsset[]): CryptoAsset[] {
-  const merged: CryptoAsset[] = [];
-  const seen = new Set<string>();
+const EXCLUDED_EXTENSIONS = [
+  '.json',    // JSON files (including CBOM reports)
+  '.xml',     // XML files
+  '.md',      // Markdown
+  '.txt',     // Plain text docs
+  '.pdf',     // PDFs
+  '.png', '.jpg', '.gif', '.svg',  // Images
+  '.zip', '.tar', '.gz',           // Archives
+  '.lock',    // Lock files
+  '.log',     // Log files
+];
 
-  const all = [...a, ...b];
+/**
+ * Check if file should be skipped
+ */
+function shouldSkipFile(uri: vscode.Uri): boolean {
+  const ext = path.extname(uri.fsPath).toLowerCase();
+  const filename = path.basename(uri.fsPath).toLowerCase();
+  
+  // Skip excluded extensions
+  if (EXCLUDED_EXTENSIONS.includes(ext)) {
+    console.log(`⏩ Skipping ${filename} (excluded extension: ${ext})`);
+    return true;
+  }
+  
+  // Skip CBOM files specifically
+  if (filename.includes('cbom') && ext === '.json') {
+    console.log(`⏩ Skipping ${filename} (CBOM report file)`);
+    return true;
+  }
+  
+  // Skip package-lock, yarn.lock, etc.
+  if (filename.includes('lock')) {
+    console.log(`⏩ Skipping ${filename} (lock file)`);
+    return true;
+  }
+  
+  return false;
+}
 
-  for (const r of all) {
-    const file = r.detectionContexts?.[0]?.filePath ?? r.source ?? '';
-    const line = r.detectionContexts?.[0]?.lineNumbers?.[0] ?? r.line ?? 0;
-    const key = `${r.name}|${r.primitive ?? r.type}|${r.assetType}|${file}|${line}`;
-
-    if (!seen.has(key)) {
-      seen.add(key);
-      merged.push(r);
+/**
+ * Select appropriate detector based on file extension and language
+ */
+function getDetectorForUri(uri: vscode.Uri): DetectorPlugin {
+  const ext = uri.fsPath.match(/\.[^.]+$/)?.[0]?.toLowerCase() || '';
+  
+  // Try to match by extension first
+  for (const plugin of plugins) {
+    if (plugin.extensions?.includes(ext)) {
+      return plugin;
     }
   }
-
-  return merged;
+  
+  // Fallback to regex detector for all other files
+  return regexDetector;
 }
 
 /**
- * Detect crypto in a single document.
- * - Always uses regexDetector
- * - Uses detectMultiLang (WASM AST) when possible
+ * Detect crypto algorithms in a single document
  */
-export async function detectInDocument(
-  uri: vscode.Uri
-): Promise<CryptoAsset[]> {
+export async function detectInDocument(uri: vscode.Uri): Promise<CryptoAsset[]> {
+  console.log(`\n📄 Scanning file: ${uri.fsPath}`);
+  
+  // Check if file should be skipped
+  if (shouldSkipFile(uri)) {
+    return [];
+  }
+  
+  const detector = getDetectorForUri(uri);
+  const detectorName = detector === jsDetector ? 'JS/TS AST' : 'Regex';
+  console.log(`🔍 Using ${detectorName} detector for ${path.basename(uri.fsPath)}`);
+  
   try {
-    const [regexResults, astResults] = await Promise.all([
-      regexDetector.detectInDocument(uri),
-      detectMultiLang(uri).catch(err => {
-        console.warn(
-          '[MULTILANG-WASM] AST detection failed, using regex only:',
-          err
-        );
-        return [];
-      })
-    ]);
-
-    return mergeResults(regexResults, astResults);
-  } catch (err) {
-    console.error('[detectInDocument] Error:', err);
+    const results = await detector.detectInDocument(uri);
+    
+    if (results.length > 0) {
+      console.log(`✅ Found ${results.length} algorithm(s):`);
+      results.forEach(r => {
+        console.log(`   - ${r.name} (${r.primitive || r.type}) [${r.severity}]`);
+      });
+    } else {
+      console.log(`ℹ️  No algorithms detected`);
+    }
+    
+    return results;
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error(`❌ Error detecting in ${uri.fsPath}:`, error);
     return [];
   }
 }
 
 /**
- * Scan the entire workspace using regex + AST.
+ * Scan entire workspace for crypto algorithms
  */
 export async function scanWorkspace(
-  onProgress: (p: { processed: number; total?: number }) => void,
-  token: vscode.CancellationToken
+  onProgress?: (p: { processed: number; total?: number }) => void,
+  token?: vscode.CancellationToken
 ): Promise<CryptoAsset[]> {
-  const folders = vscode.workspace.workspaceFolders;
-  if (!folders || folders.length === 0) {
-    return [];
-  }
-
-  const patterns = [
-    '**/*.py',
-    '**/*.java',
-    '**/*.c',
-    '**/*.cpp',
-    '**/*.go',
-    '**/*.rs',
-    '**/*.txt',
-    '**/*.cfg',
-    '**/*.conf',
-    '**/*.yml',
-    '**/*.yaml',
-    '**/*.json',
-    '**/*.js',
-    '**/*.ts'
-  ];
-
-  const exclude =
-    '{**/node_modules/**,**/.git/**,**/dist/**,**/out/**,**/build/**}';
-
-  let files: vscode.Uri[] = [];
-
-  for (const pattern of patterns) {
-    if (token.isCancellationRequested) break;
-    const uris = await vscode.workspace.findFiles(pattern, exclude);
-    files.push(...uris);
-  }
-
-  // De-duplicate
-  const seenPaths = new Set<string>();
-  files = files.filter(u => {
-    const key = u.fsPath.toLowerCase();
-    if (seenPaths.has(key)) return false;
-    seenPaths.add(key);
-    return true;
-  });
-
+  
+  console.log('\n📦 Starting workspace scan...');
+  
+  // Find all relevant files (exclude data files)
+  const files = await vscode.workspace.findFiles(
+    '**/*.{js,jsx,ts,tsx,py,java,cpp,c,h,rs,go,cs,php,rb,swift}',
+    '{**/node_modules/**,**/.git/**,**/dist/**,**/build/**,**/out/**,**/target/**}'
+  );
+  
+  console.log(`📁 Found ${files.length} source files to scan`);
+  
   const total = files.length;
+  const assetMap: Record<string, CryptoAsset> = {};
   let processed = 0;
-  let allResults: CryptoAsset[] = [];
 
   for (const uri of files) {
-    if (token.isCancellationRequested) break;
+    if (token?.isCancellationRequested) {
+      console.log('⚠️ Scan cancelled by user');
+      break;
+    }
+
+    // Skip files that shouldn't be scanned
+    if (shouldSkipFile(uri)) {
+      processed++;
+      onProgress?.({ processed, total });
+      continue;
+    }
 
     try {
-      const [regexResults, astResults] = await Promise.all([
-        regexDetector.detectInDocument(uri),
-        detectMultiLang(uri).catch(err => {
-          console.warn(
-            '[MULTILANG-WASM] AST detection failed during workspace scan:',
-            err
-          );
-          return [];
-        })
-      ]);
-
-      const merged = mergeResults(regexResults, astResults);
-      allResults = allResults.concat(merged);
-    } catch (err) {
-      console.error('[scanWorkspace] Error scanning file:', uri.fsPath, err);
+      const detector = getDetectorForUri(uri);
+      const assets = await detector.detectInDocument(uri);
+      
+      // Merge results by ID
+      for (const asset of assets) {
+        const assetId = asset.id || `unknown-${Date.now()}-${Math.random()}`;
+        
+        if (!assetMap[assetId]) {
+          assetMap[assetId] = { ...asset, id: assetId };
+        } else {
+          // Merge occurrences and contexts
+          const existing = assetMap[assetId];
+          existing.occurrences = (existing.occurrences || 0) + (asset.occurrences || 1);
+          existing.detectionContexts = existing.detectionContexts || [];
+          existing.detectionContexts.push(...(asset.detectionContexts || []));
+        }
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.warn(`⚠️ Failed to scan ${uri.fsPath}:`, error.message);
     }
 
     processed++;
-    onProgress({ processed, total });
+    onProgress?.({ processed, total });
   }
 
-  return allResults;
+  const results = Object.values(assetMap);
+  console.log(`\n✅ Workspace scan complete. Found ${results.length} unique algorithms.`);
+  
+  return results;
 }

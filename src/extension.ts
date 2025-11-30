@@ -1,16 +1,13 @@
 // src/extension.ts
 
 import * as vscode from 'vscode';
-import { detectAll } from './parser/detector-orchestrator';
+import * as parser from './parser/index';
 import { CryptoAsset } from './parser/types';
 import { generateAndDownloadCbom } from './parser/report-writer';
 import * as highlighter from './highlighter';
-import { getIBMStyleDashboard } from './dashboard-ibm';
+import { getDashboardHtml } from './dashboard';
 import { scanGithubRepo } from './commands/scanGithubRepo';
-import { importCbom } from './commands/importCbom';
-
-// Re-export for scanGithubRepo
-export { getIBMStyleDashboard };
+import { viewCbom } from './commands/viewCbom';
 
 /**
  * Formats the detected crypto assets for display in VS Code output.
@@ -31,7 +28,6 @@ function formatResults(results: CryptoAsset[]): string {
     let color = '🟩';
     if (severity === 'medium') color = '🟧';
     else if (severity === 'high') color = '🟥';
-    else if (severity === 'none') color = '🟦';
     else if (severity === 'unknown') color = '⚪';
 
     output += `${color} ${name} (${primitive}) — Severity: ${severity.toUpperCase()} (Risk Score: ${risk})\n`;
@@ -45,7 +41,7 @@ function formatResults(results: CryptoAsset[]): string {
 
       output += `  File: ${file}\n`;
       output += `  Lines: ${lines}\n`;
-      if (snippet) output += `  Snippet: ${snippet.substring(0, 100)}...\n`;
+      if (snippet) output += `  Snippet: ${snippet}\n`;
     }
 
     output += '------------------------------------------------------------\n';
@@ -58,43 +54,24 @@ function formatResults(results: CryptoAsset[]): string {
  * Activates the extension and registers commands.
  */
 export function activate(context: vscode.ExtensionContext) {
+  console.log('🔐 Crypto Detector extension is now active!');
+  
   const output = vscode.window.createOutputChannel('Crypto Detector');
 
-  /* --------------------------------------------------------------------------
-   * 🧠 Register Commands
-   * -------------------------------------------------------------------------- */
-
-  // 🔹 GitHub repo scanner
-  const scanGithubCmd = vscode.commands.registerCommand('crypto-detector.scanGithubRepo', scanGithubRepo);
-  context.subscriptions.push(scanGithubCmd);
-
-  // 🔹 CBOM importer
-  const importCbomCmd = vscode.commands.registerCommand('crypto-detector.importCbom', importCbom);
-  context.subscriptions.push(importCbomCmd);
-
-  // 🔹 Export CBOM command
-  const exportCbomCmd = vscode.commands.registerCommand('crypto-detector.exportCbom', async () => {
-    vscode.window.showInformationMessage(
-      'Please scan a file or workspace first, then use the dashboard to export CBOM.',
-      'Scan Current File',
-      'Scan Workspace'
-    ).then(choice => {
-      if (choice === 'Scan Current File') {
-        vscode.commands.executeCommand('crypto-detector.detectCrypto');
-      } else if (choice === 'Scan Workspace') {
-        vscode.commands.executeCommand('crypto-detector.scanWorkspace');
-      }
-    });
-  });
-  context.subscriptions.push(exportCbomCmd);
-
-  // 🔹 Inline highlighter & hover provider
-  context.subscriptions.push(highlighter.registerHighlighter(context));
+  // ✅ Register the inline highlighter and hover provider
+  try {
+    context.subscriptions.push(highlighter.registerHighlighter(context));
+    console.log('✅ Highlighter registered');
+  } catch (err) {
+    console.error('❌ Failed to register highlighter:', err);
+  }
 
   /**
-   * 🔍 Command: Scan current file
+   * Command: Scan current file
    */
   const scanFileCmd = vscode.commands.registerCommand('crypto-detector.detectCrypto', async () => {
+    console.log('🔍 Running crypto-detector.detectCrypto command');
+    
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       vscode.window.showWarningMessage('No active file open.');
@@ -113,42 +90,40 @@ export function activate(context: vscode.ExtensionContext) {
         progress.report({ message: 'Analyzing file...' });
 
         try {
-          // ✅ Use unified detector (AST + Regex)
-          const results = await detectAll(uri);
-
-          // Highlight results
+          const results = await parser.detectInDocument(uri);
           await highlighter.applyHighlights(results);
 
-          // Format and display
           const formatted = formatResults(results);
           output.appendLine(formatted);
           output.show(true);
 
-          // Prompt for CBOM generation
           if (results.length > 0) {
-            const choice = await vscode.window.showInformationMessage(
+            await vscode.window.showInformationMessage(
               `🔐 Detected ${results.length} cryptographic algorithm(s) in file. Generate CBOM file?`,
-              'Yes',
-              'No'
-            );
-            if (choice === 'Yes') {
-              await generateAndDownloadCbom(results);
-            }
+              "Yes",
+              "No"
+            ).then(async (choice) => {
+              if (choice === "Yes") {
+                await generateAndDownloadCbom(results);
+              }
+            });
           } else {
-            vscode.window.showInformationMessage('✅ No cryptographic algorithms found.');
+            vscode.window.showInformationMessage(`✅ No cryptographic algorithms found.`);
           }
         } catch (err: any) {
+          console.error('❌ Error scanning file:', err);
           vscode.window.showErrorMessage(`Error scanning file: ${err.message}`);
-          console.error('[detectCrypto]', err);
         }
       }
     );
   });
 
   /**
-   * 🌍 Command: Scan entire workspace
+   * Command: Scan entire workspace
    */
   const scanWorkspaceCmd = vscode.commands.registerCommand('crypto-detector.scanWorkspace', async () => {
+    console.log('🔍 Running crypto-detector.scanWorkspace command');
+    
     if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
       vscode.window.showWarningMessage('No workspace folder is open.');
       return;
@@ -161,87 +136,108 @@ export function activate(context: vscode.ExtensionContext) {
         cancellable: true
       },
       async (progress, token) => {
-        let processed = 0;
-
-        const files = await vscode.workspace.findFiles('**/*.{py,java,c,cpp,go,rs,txt,cfg,conf,yml,yaml,json,js,ts}', '**/node_modules/**');
-        const total = files.length;
-
-        for (const file of files) {
-          if (token.isCancellationRequested) break;
-          progress.report({ message: `Analyzing ${++processed}/${total}: ${file.fsPath.split('/').pop()}` });
-        }
+        const onProgress = (p: { processed: number; total?: number }): void => {
+          const total = p.total ?? 'unknown';
+          progress.report({ message: `Processed ${p.processed}/${total}` });
+        };
 
         try {
-          const allResults: CryptoAsset[] = [];
+          const results = await parser.scanWorkspace(onProgress, token);
+          await highlighter.applyHighlights(results);
 
-          // Scan all files with unified detector
-          for (const file of files) {
-            if (token.isCancellationRequested) break;
-            try {
-              const results = await detectAll(file);
-              allResults.push(...results);
-            } catch (err) {
-              console.warn('[scanWorkspace] Error scanning file:', file.fsPath, err);
-            }
-          }
-
-          await highlighter.applyHighlights(allResults);
-
-          const formatted = formatResults(allResults);
+          const formatted = formatResults(results);
           output.appendLine(formatted);
           output.show(true);
-
-          if (allResults.length === 0) {
+          
+          if (results.length === 0) {
             vscode.window.showInformationMessage('✅ No cryptographic algorithms found in workspace.');
             return;
           }
 
-          // 🧠 Display interactive dashboard
+          // Show Dashboard View automatically after scan
           const panel = vscode.window.createWebviewPanel(
             'cryptoDashboard',
-            'IBM Cryptographic Bill of Materials',
+            'Crypto Risk Dashboard',
             vscode.ViewColumn.One,
             { enableScripts: true, retainContextWhenHidden: true }
           );
-          panel.webview.html = getIBMStyleDashboard(allResults);
+          panel.webview.html = getDashboardHtml(results);
 
-          // Listen for button clicks inside the WebView
+          // Listen for button clicks from inside the WebView
           panel.webview.onDidReceiveMessage(async (message) => {
             if (message.command === 'generateCbom') {
-              await generateAndDownloadCbom(allResults);
+              await generateAndDownloadCbom(results);
             }
           });
+
         } catch (err: any) {
+          console.error('❌ Error scanning workspace:', err);
           vscode.window.showErrorMessage(`Error scanning workspace: ${err.message}`);
-          console.error('[scanWorkspace]', err);
         }
       }
     );
   });
 
   /**
-   * 📊 Command: Manually open dashboard
+   * Command: Export CBOM
+   */
+  const exportCbomCmd = vscode.commands.registerCommand('crypto-detector.exportCbom', async () => {
+    console.log('📦 Running crypto-detector.exportCbom command');
+    vscode.window.showInformationMessage('Please run a scan first to generate CBOM data.');
+  });
+
+  /**
+   * Command: Scan GitHub Repository
+   */
+  const scanGithubCmd = vscode.commands.registerCommand('crypto-detector.scanGithubRepo', async () => {
+    console.log('🐙 Running crypto-detector.scanGithubRepo command');
+    await scanGithubRepo();
+  });
+
+  /**
+   * Command: View/Visualize CBOM File
+   */
+  const viewCbomCmd = vscode.commands.registerCommand('crypto-detector.viewCbom', async () => {
+    console.log('📊 Running crypto-detector.viewCbom command');
+    await viewCbom();
+  });
+
+  /**
+   * Command: Manually show dashboard
    */
   const showDashboardCmd = vscode.commands.registerCommand('crypto-detector.showDashboard', async () => {
+    console.log('📊 Running crypto-detector.showDashboard command');
+    
     const panel = vscode.window.createWebviewPanel(
       'cryptoDashboard',
-      'IBM Cryptographic Bill of Materials',
+      'Crypto Risk Dashboard',
       vscode.ViewColumn.One,
       { enableScripts: true, retainContextWhenHidden: true }
     );
 
-    panel.webview.html = getIBMStyleDashboard([]);
+    panel.webview.html = getDashboardHtml([]);
   });
 
-  // Register all commands and output
-  context.subscriptions.push(scanFileCmd, scanWorkspaceCmd, showDashboardCmd, output);
+  // Register all commands
+  context.subscriptions.push(
+    scanFileCmd, 
+    scanWorkspaceCmd, 
+    exportCbomCmd,
+    scanGithubCmd,
+    viewCbomCmd,
+    showDashboardCmd, 
+    output
+  );
 
-  console.log('✅ Crypto Detector extension activated!');
+  console.log('✅ All commands registered successfully:');
+  console.log('  - crypto-detector.detectCrypto');
+  console.log('  - crypto-detector.scanWorkspace');
+  console.log('  - crypto-detector.exportCbom');
+  console.log('  - crypto-detector.scanGithubRepo');
+  console.log('  - crypto-detector.viewCbom');
+  console.log('  - crypto-detector.showDashboard');
 }
 
-/**
- * 🧹 Deactivate cleanup.
- */
 export function deactivate() {
-  // no cleanup needed yet
+  console.log('👋 Crypto Detector extension deactivated');
 }
