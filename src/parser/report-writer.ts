@@ -5,15 +5,13 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import { CryptoAsset } from './types';
 
-/**
- * Generate IBM-compliant CycloneDX CBOM (Cryptographic Bill of Materials)
- * Following the CycloneDX 1.6 specification for cryptographic assets
- */
+/* --------------------------------------------------------------------------
+ * 🧩 CBOM (Cryptographic Bill of Materials) Report Generator
+ * -------------------------------------------------------------------------- */
 export async function writeCbomJson(
   assets: CryptoAsset[],
   workspaceFolder?: vscode.WorkspaceFolder
-): Promise<string> {
-  
+) {
   if (!workspaceFolder) {
     const folders = vscode.workspace.workspaceFolders;
     if (!folders || folders.length === 0) {
@@ -22,169 +20,86 @@ export async function writeCbomJson(
     workspaceFolder = folders[0];
   }
 
-  const bomRef = `urn:uuid:${crypto.randomUUID()}`;
-  const timestamp = new Date().toISOString();
+  const components = assets.map((a, i) => {
+    const occurrences = (a.detectionContexts ?? []).flatMap(ctx => ctx.lineNumbers ?? []).length > 0
+      ? (a.detectionContexts ?? []).flatMap(ctx => ctx.lineNumbers ?? []).length
+      : a.occurrences ?? 1;
 
-  // Build CycloneDX 1.6 compliant CBOM
+    // Build evidence array with proper structure
+    const evidenceOccurrences = (a.detectionContexts ?? []).map(ctx => ({
+      location: ctx.filePath ?? 'unknown',
+      lineNumbers: ctx.lineNumbers ?? [],
+      snippet: (ctx.snippet ?? '').substring(0, 300)
+    }));
+
+    return {
+      type: 'cryptographic-asset',
+      'bom-ref': a.id ?? `${(a.name ?? 'unknown').toLowerCase()}-${i}`,
+      name: a.name ?? 'Unknown',
+      evidence: {
+        occurrences: evidenceOccurrences
+      },
+      cryptoProperties: {
+        assetType: a.assetType ?? 'algorithm',
+        algorithmProperties: {
+          primitive: a.primitive ?? a.type ?? 'unknown',
+          cryptoFunctions: [a.description ?? 'unknown']
+        },
+        quantumSafe: String(a.quantumSafe ?? 'unknown'),
+        severity: a.severity ?? 'unknown',
+        riskScore: a.riskScore ?? a.score ?? 0
+      }
+    };
+  });
+
   const cbom = {
     bomFormat: 'CycloneDX',
     specVersion: '1.6',
-    serialNumber: bomRef,
+    serialNumber: `urn:uuid:${crypto.randomUUID()}`,
     version: 1,
     metadata: {
-      timestamp,
-      tools: {
-        components: [
-          {
-            type: 'application',
-            name: 'Crypto Detector for VS Code',
-            version: '0.0.2',
-            author: 'Syed Shail',
-            publisher: 'syedshail'
-          }
-        ]
-      },
-      component: {
-        type: 'application',
-        'bom-ref': bomRef,
-        name: path.basename(workspaceFolder.uri.fsPath),
-        description: 'Cryptographic Bill of Materials for project'
-      }
-    },
-    components: assets.map((asset, idx) => {
-      const componentBomRef = `crypto-asset-${idx}`;
-      
-      return {
-        'bom-ref': componentBomRef,
-        type: 'cryptographic-asset',
-        name: asset.name,
-        description: asset.description || `${asset.primitive} cryptographic algorithm`,
-        cryptoProperties: {
-          assetType: mapAssetType(asset.assetType),
-          algorithmProperties: {
-            primitive: mapPrimitive(asset.primitive),
-            ...(asset.parameter && { parameterSetIdentifier: asset.parameter }),
-            ...(asset.keySize && { 
-              executionEnvironment: 'software-plain-ram',
-              implementationPlatform: 'x86_64'
-            }),
-            ...(asset.quantumSafe !== undefined && {
-              certificationLevel: ['none'],
-              mode: mapQuantumSafetyToMode(asset.quantumSafe),
-              padding: 'none'
-            }),
-            cryptoFunctions: [mapCryptoFunction(asset.primitive)]
-          },
-          ...(asset.oid && { oid: asset.oid })
-        },
-        properties: [
-          {
-            name: 'quantum-safe',
-            value: String(asset.quantumSafe ?? 'unknown')
-          },
-          {
-            name: 'severity',
-            value: asset.severity ?? 'unknown'
-          },
-          {
-            name: 'risk-score',
-            value: String(asset.riskScore ?? 0)
-          },
-          {
-            name: 'occurrences',
-            value: String(asset.occurrences)
-          }
-        ],
-        evidence: {
-          occurrences: asset.detectionContexts.map(ctx => ({
-            location: ctx.filePath,
-            ...(ctx.lineNumbers && ctx.lineNumbers.length > 0 && {
-              line: ctx.lineNumbers[0],
-              offset: 0
-            }),
-            ...(ctx.snippet && { 
-              additionalContext: ctx.snippet.substring(0, 100)
-            })
-          }))
+      timestamp: new Date().toISOString(),
+      tools: [
+        {
+          vendor: 'Syed Shail',
+          name: 'Crypto Detector for VS Code',
+          version: '1.0.0'
         }
-      };
-    })
+      ]
+    },
+    components,
+    statistics: {
+      totalDetected: assets.length,
+      highRisk: assets.filter(a => a.severity === 'high').length,
+      mediumRisk: assets.filter(a => a.severity === 'medium').length,
+      lowRisk: assets.filter(a => a.severity === 'low').length
+    }
   };
 
-  // Write to file
   const outPath = path.join(
     workspaceFolder.uri.fsPath,
-    `cbom_${Date.now()}.json`
+    `crypto_cbom_${Date.now()}.json`
   );
   
-  await fs.writeFile(outPath, JSON.stringify(cbom, null, 2), 'utf8');
-  console.log(`📝 CBOM written to: ${outPath}`);
-  
-  return outPath;
+  try {
+    await fs.writeFile(outPath, JSON.stringify(cbom, null, 2), 'utf8');
+    return outPath;
+  } catch (err) {
+    console.error('[writeCbomJson] Failed to write file:', err);
+    throw new Error(`Failed to write CBOM file: ${err}`);
+  }
 }
 
-/**
- * Map internal asset types to CycloneDX spec
- */
-function mapAssetType(type: string): string {
-  const mapping: Record<string, string> = {
-    'algorithm': 'algorithm',
-    'certificate': 'certificate',
-    'protocol': 'protocol',
-    'related-crypto-material': 'related-crypto-material'
-  };
-  return mapping[type] || 'algorithm';
-}
-
-/**
- * Map primitive types to CycloneDX crypto primitives
- */
-function mapPrimitive(primitive: string): string {
-  const mapping: Record<string, string> = {
-    'hash': 'hash',
-    'symmetric': 'ae',
-    'cipher': 'ae',
-    'asymmetric': 'pke',
-    'mac': 'mac',
-    'pqc': 'pke',
-    'signature': 'signature',
-    'kdf': 'kdf',
-    'other': 'other'
-  };
-  return mapping[primitive.toLowerCase()] || 'other';
-}
-
-/**
- * Map quantum safety status to execution mode
- */
-function mapQuantumSafetyToMode(quantumSafe: boolean | 'partial' | 'unknown'): string {
-  if (quantumSafe === true) return 'pqc-secure';
-  if (quantumSafe === 'partial') return 'hybrid';
-  return 'classical';
-}
-
-/**
- * Map primitive to crypto function
- */
-function mapCryptoFunction(primitive: string): string {
-  const mapping: Record<string, string> = {
-    'hash': 'digest',
-    'symmetric': 'encrypt',
-    'cipher': 'encrypt',
-    'asymmetric': 'keygen',
-    'mac': 'tag',
-    'signature': 'sign',
-    'kdf': 'keyderive'
-  };
-  return mapping[primitive.toLowerCase()] || 'unknown';
-}
-
-/**
- * Helper function to generate and save CBOM, then notify user
- */
-export async function generateAndDownloadCbom(assets: CryptoAsset[]): Promise<void> {
+/* --------------------------------------------------------------------------
+ * 🧾 Helper: Save Report and Notify User
+ * -------------------------------------------------------------------------- */
+export async function generateAndDownloadCbom(
+  assets: CryptoAsset[]
+): Promise<void> {
   if (assets.length === 0) {
-    vscode.window.showInformationMessage('✅ No cryptographic assets detected to include in CBOM.');
+    vscode.window.showInformationMessage(
+      '✅ No cryptographic assets detected to include in CBOM.'
+    );
     return;
   }
 
@@ -192,6 +107,7 @@ export async function generateAndDownloadCbom(assets: CryptoAsset[]): Promise<vo
     const folder = vscode.workspace.workspaceFolders?.[0];
     const outPath = await writeCbomJson(assets, folder);
 
+    // Show message + open the generated file
     vscode.window
       .showInformationMessage(
         `📦 CBOM generated: ${path.basename(outPath)}`,
@@ -200,14 +116,25 @@ export async function generateAndDownloadCbom(assets: CryptoAsset[]): Promise<vo
       )
       .then(async choice => {
         if (choice === 'Open File') {
-          const doc = await vscode.workspace.openTextDocument(outPath);
-          await vscode.window.showTextDocument(doc);
+          try {
+            const doc = await vscode.workspace.openTextDocument(outPath);
+            await vscode.window.showTextDocument(doc);
+          } catch (err) {
+            console.error('[generateAndDownloadCbom] Failed to open file:', err);
+            vscode.window.showErrorMessage('Failed to open CBOM file.');
+          }
         } else if (choice === 'Reveal in Explorer') {
-          await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(outPath));
+          try {
+            await vscode.commands.executeCommand(
+              'revealFileInOS',
+              vscode.Uri.file(outPath)
+            );
+          } catch (err) {
+            console.error('[generateAndDownloadCbom] Failed to reveal in explorer:', err);
+          }
         }
       });
   } catch (err: any) {
     vscode.window.showErrorMessage(`❌ Failed to generate CBOM: ${err.message}`);
-    console.error('CBOM generation error:', err);
   }
 }

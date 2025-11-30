@@ -1,181 +1,107 @@
 // src/parser/js-detector.ts
 import * as vscode from 'vscode';
-import * as ts from 'typescript';
-import * as fs from 'fs';
-import { CryptoAsset } from './types';
+import { CryptoAsset, Severity } from './types';
 import { assignRisk } from './risk-utils';
+import * as fs from 'fs';
 
 /**
- * Create unique ID for detected algorithm
+ * JavaScript-specific detector for crypto APIs
+ * Detects Node.js crypto module usage and browser crypto APIs
  */
-function makeId(name: string): string {
-  return `js:${name.toLowerCase().replace(/\s+/g, '-')}`;
-}
-
-/**
- * Extract snippet around detection point
- */
-function snippetAt(text: string, index: number, radius = 80): string {
-  const start = Math.max(0, index - radius);
-  const end = Math.min(text.length, index + radius);
-  return text.substring(start, end).replace(/\r?\n/g, ' ');
-}
-
-/**
- * Classify quantum safety of algorithm
- */
-function classifyQuantumSafety(name: string): boolean | 'partial' | 'unknown' {
-  const lower = name.toLowerCase();
-
-  // Known vulnerable algorithms
-  if (lower.includes('rsa') || lower.includes('ecdsa') || 
-      lower.includes('sha1') || lower.includes('md5') || 
-      lower.includes('des') || lower.includes('rc4')) {
-    return false;
-  }
-
-  // Partially quantum-resistant
-  if (lower.includes('aes') || lower.includes('sha2') || 
-      lower.includes('sha3') || lower.includes('sha256') || 
-      lower.includes('sha512') || lower.includes('chacha')) {
-    return 'partial';
-  }
-
-  // Post-quantum safe
-  if (lower.includes('kyber') || lower.includes('dilithium') || 
-      lower.includes('falcon') || lower.includes('sphincs')) {
-    return true;
-  }
-
-  return 'unknown';
-}
-
-/**
- * Main JavaScript/TypeScript detector
- */
-export const jsDetector = {
-  extensions: ['.js', '.jsx', '.ts', '.tsx'],
-  languageIds: ['javascript', 'typescript'],
+export class JSDetector {
+  private readonly jsPatterns = [
+    // Node.js crypto module
+    { name: 'crypto.createHash', type: 'hash', quantumSafe: 'partial' as const },
+    { name: 'crypto.createHmac', type: 'mac', quantumSafe: 'partial' as const },
+    { name: 'crypto.createCipheriv', type: 'symmetric', quantumSafe: 'partial' as const },
+    { name: 'crypto.createDecipheriv', type: 'symmetric', quantumSafe: 'partial' as const },
+    { name: 'crypto.generateKeyPair', type: 'asymmetric', quantumSafe: false },
+    { name: 'crypto.publicEncrypt', type: 'asymmetric', quantumSafe: false },
+    { name: 'crypto.privateDecrypt', type: 'asymmetric', quantumSafe: false },
+    
+    // Web Crypto API
+    { name: 'crypto.subtle.digest', type: 'hash', quantumSafe: 'partial' as const },
+    { name: 'crypto.subtle.encrypt', type: 'symmetric', quantumSafe: 'partial' as const },
+    { name: 'crypto.subtle.decrypt', type: 'symmetric', quantumSafe: 'partial' as const },
+    { name: 'crypto.subtle.sign', type: 'asymmetric', quantumSafe: false },
+    { name: 'crypto.subtle.verify', type: 'asymmetric', quantumSafe: false },
+    
+    // Specific algorithm mentions
+    { name: 'SHA-256', type: 'hash', quantumSafe: 'partial' as const },
+    { name: 'SHA-512', type: 'hash', quantumSafe: 'partial' as const },
+    { name: 'MD5', type: 'hash', quantumSafe: false },
+    { name: 'SHA-1', type: 'hash', quantumSafe: false },
+    { name: 'AES', type: 'symmetric', quantumSafe: 'partial' as const },
+    { name: 'RSA', type: 'asymmetric', quantumSafe: false },
+    { name: 'ECDSA', type: 'asymmetric', quantumSafe: false },
+  ];
 
   async detectInDocument(uri: vscode.Uri): Promise<CryptoAsset[]> {
-    console.log('🔍 [JS DETECTOR] Scanning:', uri.fsPath);
-
-    const filePath = uri.fsPath;
-    
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      console.warn('⚠️ File not found:', filePath);
+    try {
+      const content = fs.readFileSync(uri.fsPath, 'utf8');
+      return this.scan(content, uri.fsPath);
+    } catch (err) {
+      console.error(`[JSDetector] Failed to read file ${uri.fsPath}:`, err);
       return [];
     }
+  }
 
-    const compilerOptions: ts.CompilerOptions = {
-      allowJs: true,
-      checkJs: false,
-      jsx: ts.JsxEmit.React,
-      target: ts.ScriptTarget.ES2020,
-      module: ts.ModuleKind.CommonJS,
-    };
+  scan(content: string, filename: string): CryptoAsset[] {
+    const results: CryptoAsset[] = [];
+    const lines = content.split('\n');
+    const seenDetections = new Set<string>();
 
-    // Create TypeScript program
-    const program = ts.createProgram([filePath], compilerOptions);
-    const checker = program.getTypeChecker();
-    const sourceFile = program.getSourceFile(filePath);
+    for (const pattern of this.jsPatterns) {
+      const regex = new RegExp(this.escapeRegex(pattern.name), 'gi');
 
-    if (!sourceFile) {
-      console.warn('⚠️ No source file found');
-      return [];
-    }
-
-    const fileText = fs.readFileSync(filePath, 'utf8');
-    const found: Record<string, CryptoAsset> = {};
-
-    /**
-     * Visit AST nodes recursively
-     */
-    const visit = (node: ts.Node): void => {
-      // Detect crypto API calls
-      if (ts.isCallExpression(node)) {
-        const expr = node.expression;
-
-        if (ts.isPropertyAccessExpression(expr)) {
-          const objName = expr.expression.getText(sourceFile);
-          const methodName = expr.name.getText(sourceFile);
-
-          // Node.js crypto API detection
-          if (objName === 'crypto' && 
-              ['createHash', 'createHmac', 'createCipheriv', 'createDecipheriv'].includes(methodName)) {
-            
-            let algorithm: string | undefined;
-            const firstArg = node.arguments[0];
-
-            // Extract algorithm name from first argument
-            if (firstArg) {
-              if (ts.isStringLiteral(firstArg) || ts.isNoSubstitutionTemplateLiteral(firstArg)) {
-                algorithm = firstArg.text;
-              } else if (ts.isIdentifier(firstArg)) {
-                const sym = checker.getSymbolAtLocation(firstArg);
-                if (sym?.valueDeclaration && ts.isVariableDeclaration(sym.valueDeclaration)) {
-                  const init = sym.valueDeclaration.initializer;
-                  if (init && ts.isStringLiteral(init)) {
-                    algorithm = init.text;
-                  }
-                }
-              }
-            }
-
-            if (algorithm) {
-              const nameUp = algorithm.toUpperCase();
-              const id = makeId(nameUp);
-              const quantumSafe = classifyQuantumSafety(nameUp);
-              
-              // Determine primitive type
-              let primitive = 'hash';
-              if (methodName.includes('Cipher')) primitive = 'symmetric';
-              if (methodName === 'createHmac') primitive = 'mac';
-              
-              const { severity, score } = assignRisk(quantumSafe, primitive, nameUp);
-
-              const pos = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
-              const snippet = snippetAt(fileText, node.getStart(sourceFile));
-
-              if (!found[id]) {
-                found[id] = {
-                  id,
-                  assetType: 'algorithm',
-                  primitive,
-                  name: nameUp,
-                  description: `Detected in crypto.${methodName}()`,
-                  quantumSafe,
-                  detectionContexts: [{
-                    filePath,
-                    lineNumbers: [pos.line + 1],
-                    snippet
-                  }],
-                  occurrences: 1,
-                  severity,
-                  riskScore: score,
-                };
-              } else {
-                found[id].occurrences += 1;
-                found[id].detectionContexts.push({
-                  filePath,
-                  lineNumbers: [pos.line + 1],
-                  snippet,
-                });
-              }
-
-              console.log(`✅ Found: ${nameUp} | Severity: ${severity} | Risk: ${score}`);
-            }
+      lines.forEach((line, index) => {
+        const matches = line.match(regex);
+        if (matches) {
+          const lineNumber = index + 1;
+          const snippet = line.trim();
+          
+          // Avoid duplicates
+          const detectionKey = `${pattern.name}-${filename}-${lineNumber}`;
+          if (seenDetections.has(detectionKey)) {
+            return;
           }
+          seenDetections.add(detectionKey);
+
+          const risk = assignRisk(pattern.quantumSafe, pattern.type, pattern.name);
+
+          results.push({
+            name: pattern.name,
+            type: pattern.type,
+            primitive: pattern.type,
+            assetType: 'algorithm',
+            description: `JavaScript crypto API: ${pattern.name}`,
+            quantumSafe: pattern.quantumSafe,
+            severity: risk.severity as Severity,
+            score: risk.score,
+            riskScore: risk.score,
+            reason: risk.explanation,
+            source: filename,
+            line: lineNumber,
+            occurrences: 1,
+            id: `js:${pattern.name.toLowerCase()}-${lineNumber}`,
+            detectionContexts: [
+              {
+                filePath: filename,
+                lineNumbers: [lineNumber],
+                snippet
+              }
+            ]
+          });
         }
-      }
+      });
+    }
 
-      ts.forEachChild(node, visit);
-    };
+    return results;
+  }
 
-    visit(sourceFile);
+  private escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+}
 
-    console.log(`📦 JS scan complete. Found ${Object.keys(found).length} algorithms.`);
-    return Object.values(found);
-  },
-};
+export const jsDetector = new JSDetector();
