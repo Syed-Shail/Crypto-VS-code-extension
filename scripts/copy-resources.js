@@ -2,39 +2,33 @@
 const fs = require('fs');
 const path = require('path');
 
+console.log('\n📦 Copying resources...\n');
+
 function copyFileSync(source, target) {
+  if (!fs.existsSync(source)) {
+    console.warn(`⚠️  Source not found: ${source}`);
+    return false;
+  }
+
   let targetFile = target;
 
-  // If target is a directory, a new file with the same name will be created
-  if (fs.existsSync(target)) {
-    if (fs.lstatSync(target).isDirectory()) {
-      targetFile = path.join(target, path.basename(source));
-    }
+  // If target is a directory, create a file with the same name
+  if (fs.existsSync(target) && fs.lstatSync(target).isDirectory()) {
+    targetFile = path.join(target, path.basename(source));
   }
 
-  fs.writeFileSync(targetFile, fs.readFileSync(source));
+  try {
+    fs.writeFileSync(targetFile, fs.readFileSync(source));
+    return true;
+  } catch (err) {
+    console.error(`❌ Failed to copy ${source}:`, err.message);
+    return false;
+  }
 }
 
-function copyFolderRecursiveSync(source, target) {
-  let files = [];
-
-  // Check if folder needs to be created
-  const targetFolder = path.join(target, path.basename(source));
-  if (!fs.existsSync(targetFolder)) {
-    fs.mkdirSync(targetFolder, { recursive: true });
-  }
-
-  // Copy
-  if (fs.lstatSync(source).isDirectory()) {
-    files = fs.readdirSync(source);
-    files.forEach(function (file) {
-      const curSource = path.join(source, file);
-      if (fs.lstatSync(curSource).isDirectory()) {
-        copyFolderRecursiveSync(curSource, targetFolder);
-      } else {
-        copyFileSync(curSource, targetFolder);
-      }
-    });
+function ensureDir(dir) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
 }
 
@@ -44,34 +38,40 @@ const outParserDir = path.join(outDir, 'parser');
 const outRulesDir = path.join(outParserDir, 'rules');
 const outGrammarsDir = path.join(outParserDir, 'grammars');
 
-[outDir, outParserDir, outRulesDir, outGrammarsDir].forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
+[outDir, outParserDir, outRulesDir, outGrammarsDir].forEach(ensureDir);
 
 // Copy crypto-rules.json
 const rulesSource = path.join(__dirname, '..', 'src', 'parser', 'rules', 'crypto-rules.json');
 const rulesTarget = path.join(outRulesDir, 'crypto-rules.json');
-if (fs.existsSync(rulesSource)) {
-  copyFileSync(rulesSource, rulesTarget);
+
+if (copyFileSync(rulesSource, rulesTarget)) {
   console.log('✅ Copied crypto-rules.json');
 } else {
-  console.warn('⚠️  crypto-rules.json not found at', rulesSource);
+  console.error('❌ Failed to copy crypto-rules.json');
 }
 
-// Copy grammar files
+// Copy WASM grammar files from grammars/ directory
 const grammarsSource = path.join(__dirname, '..', 'grammars');
+
 if (fs.existsSync(grammarsSource)) {
   const grammarFiles = fs.readdirSync(grammarsSource).filter(f => f.endsWith('.wasm'));
-  grammarFiles.forEach(file => {
-    const source = path.join(grammarsSource, file);
-    const target = path.join(outGrammarsDir, file);
-    copyFileSync(source, target);
-    console.log(`✅ Copied ${file}`);
-  });
+  
+  if (grammarFiles.length === 0) {
+    console.warn('⚠️  No .wasm files found in grammars/ directory');
+    console.warn('   Extension will use regex-only detection');
+  } else {
+    grammarFiles.forEach(file => {
+      const source = path.join(grammarsSource, file);
+      const target = path.join(outGrammarsDir, file);
+      if (copyFileSync(source, target)) {
+        const stats = fs.statSync(target);
+        console.log(`✅ Copied ${file} (${Math.round(stats.size / 1024)}KB)`);
+      }
+    });
+  }
 } else {
-  console.warn('⚠️  grammars directory not found. Run npm run download-grammars first.');
+  console.warn('⚠️  grammars/ directory not found');
+  console.warn('   Create it and add .wasm files, or extension will use regex-only detection');
 }
 
-console.log('✅ Resource copying complete!');
+console.log('\n✅ Resource copying complete!\n');

@@ -78,10 +78,9 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && node scripts/copy-resources.js",
     "watch": "tsc -watch -p ./",
-    "setup": "node download-grammars.js",
-    "postinstall": "node download-grammars.js || echo 'Warning: Grammar download failed, AST parsing may not work'"
+    "postinstall": "echo 'Install complete. Run npm run compile to build.'"
   },
   "devDependencies": {
     "@babel/parser": "^7.28.5",
