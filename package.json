@@ -72,6 +72,12 @@
         "title": "Crypto Detector: Show Dashboard",
         "category": "Crypto Detector",
         "icon": "$(dashboard)"
+      },
+      {
+        "command": "crypto-detector.runLocalWorkflow",
+        "title": "Crypto Detector: Run Complete Workflow (Matrix + Full Analysis)",
+        "category": "Crypto Detector",
+        "icon": "$(gear)"
       }
     ],
     "configuration": {
