@@ -29,6 +29,64 @@ interface DependencyInfo {
 }
 
 /**
+ * Test function to verify CBOM generation
+ */
+export async function testCBOMGeneration() {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders || workspaceFolders.length === 0) {
+    vscode.window.showErrorMessage('No workspace folder is open.');
+    return;
+  }
+
+  const workspaceRoot = workspaceFolders[0].uri.fsPath;
+  const outputDir = path.join(workspaceRoot, '.cbom-analysis');
+
+  try {
+    // Create output directory
+    await fs.mkdir(outputDir, { recursive: true });
+    console.log(`Output directory created: ${outputDir}`);
+
+    // Create minimal test CBOM
+    const testCBOM = {
+      bomFormat: 'CycloneDX',
+      specVersion: '1.6',
+      serialNumber: `urn:uuid:${require('crypto').randomUUID()}`,
+      version: 1,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        tools: [{
+          vendor: 'Test',
+          name: 'CBOM Test',
+          version: '1.0.0'
+        }]
+      },
+      components: [{
+        type: 'cryptographic-asset',
+        'bom-ref': 'test-1',
+        name: 'SHA256',
+        cryptoProperties: {
+          assetType: 'algorithm',
+          algorithmProperties: { primitive: 'hash' }
+        }
+      }]
+    };
+
+    const cbomPath = path.join(outputDir, 'test-cbom.json');
+    await fs.writeFile(cbomPath, JSON.stringify(testCBOM, null, 2), 'utf8');
+    
+    vscode.window.showInformationMessage(`✅ Test CBOM created at: ${cbomPath}`);
+    
+    // Open the file
+    const doc = await vscode.workspace.openTextDocument(cbomPath);
+    await vscode.window.showTextDocument(doc);
+    
+  } catch (err: any) {
+    vscode.window.showErrorMessage(`Test failed: ${err.message}`);
+    console.error('Test error:', err);
+  }
+}
+
+/**
  * Main command: Run complete CBOM workflow locally
  */
 export async function runLocalWorkflow() {
@@ -138,11 +196,15 @@ async function runWorkflowOnGitHub() {
 async function runWorkflowOnDirectory(workspaceRoot: string, isTemp: boolean = false) {
   const outputDir = path.join(workspaceRoot, '.cbom-analysis');
 
-  // Create output directory
+  // Create output directory (critical!)
   try {
+    console.log(`[runWorkflowOnDirectory] Creating output directory: ${outputDir}`);
     await fs.mkdir(outputDir, { recursive: true });
+    console.log(`[runWorkflowOnDirectory] Output directory created/verified`);
   } catch (err) {
-    console.error('Failed to create output directory:', err);
+    console.error('[runWorkflowOnDirectory] Failed to create output directory:', err);
+    vscode.window.showErrorMessage(`Failed to create output directory: ${err}`);
+    return;
   }
 
   await vscode.window.withProgress(
@@ -216,16 +278,46 @@ async function runWorkflowOnDirectory(workspaceRoot: string, isTemp: boolean = f
 
         // Show completion message
         console.log('[Workflow] Workflow complete!');
-        const viewReport = 'View Report';
+        
+        // Check if files were actually created
+        const cbomPath = path.join(outputDir, 'cbom-report.json');
+        const summaryPath = path.join(outputDir, 'SUMMARY.md');
+        const csvPath = path.join(outputDir, 'detections.csv');
+        
+        const cbomExists = fsSync.existsSync(cbomPath);
+        const summaryExists = fsSync.existsSync(summaryPath);
+        const csvExists = fsSync.existsSync(csvPath);
+        
+        console.log('[Workflow] Files created:');
+        console.log(`  - cbom-report.json: ${cbomExists}`);
+        console.log(`  - SUMMARY.md: ${summaryExists}`);
+        console.log(`  - detections.csv: ${csvExists}`);
+        
+        if (!cbomExists || !summaryExists || !csvExists) {
+          vscode.window.showWarningMessage(
+            `⚠️ Some output files were not created. Check: ${outputDir}`
+          );
+        }
+        
+        const viewReport = 'View Dashboard';
+        const openCBOM = 'Open CBOM File';
         const openFolder = 'Open Folder';
         const choice = await vscode.window.showInformationMessage(
-          `✅ CBOM Workflow Complete! Found ${allDetections.length} cryptographic assets across ${matrix.languages.length} languages.`,
+          `✅ CBOM Workflow Complete!\n\nFound ${allDetections.length} assets across ${matrix.languages.length} languages.\n\nOutput saved to: ${outputDir}`,
           viewReport,
+          openCBOM,
           openFolder
         );
 
         if (choice === viewReport) {
           await showWorkflowDashboard(allDetections, matrix, dependencies);
+        } else if (choice === openCBOM) {
+          if (cbomExists) {
+            const doc = await vscode.workspace.openTextDocument(cbomPath);
+            await vscode.window.showTextDocument(doc);
+          } else {
+            vscode.window.showErrorMessage('CBOM file not found!');
+          }
         } else if (choice === openFolder) {
           if (!isTemp) {
             await vscode.commands.executeCommand(
@@ -497,90 +589,104 @@ async function generateComprehensiveCBOM(
   outputDir: string,
   workspaceRoot: string
 ) {
-  const crypto = require('crypto');
-  
-  const cbom = {
-    bomFormat: 'CycloneDX',
-    specVersion: '1.6',
-    serialNumber: `urn:uuid:${crypto.randomUUID()}`,
-    version: 1,
-    metadata: {
-      timestamp: new Date().toISOString(),
-      tools: [{
-        vendor: 'Syed Shail',
-        name: 'Crypto Detector - Local Workflow',
-        version: '1.0.0'
-      }],
-      component: {
-        type: 'application',
-        name: path.basename(workspaceRoot),
-        version: '1.0.0'
-      },
-      properties: [
-        { name: 'analysis:languages', value: matrix.languages.join(', ') },
-        { name: 'analysis:totalFiles', value: String(matrix.totalFiles) },
-        { name: 'analysis:totalBytes', value: String(matrix.totalBytes) },
-        { name: 'analysis:timestamp', value: new Date().toISOString() }
-      ]
-    },
-    components: [
-      // Main cryptographic assets
-      ...detections.map((d, i) => ({
-        type: 'cryptographic-asset',
-        'bom-ref': d.id || `asset-${i}`,
-        name: d.name || 'Unknown',
-        cryptoProperties: {
-          assetType: d.assetType || 'algorithm',
-          algorithmProperties: {
-            primitive: d.primitive || d.type || 'unknown',
-            cryptoFunctions: [d.description || 'unknown']
-          },
-          quantumSafe: String(d.quantumSafe || 'unknown'),
-          severity: d.severity || 'unknown',
-          riskScore: d.riskScore || d.score || 0
+  try {
+    console.log('[generateComprehensiveCBOM] Starting...');
+    const crypto = require('crypto');
+    
+    const cbom = {
+      bomFormat: 'CycloneDX',
+      specVersion: '1.6',
+      serialNumber: `urn:uuid:${crypto.randomUUID()}`,
+      version: 1,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        tools: [{
+          vendor: 'Syed Shail',
+          name: 'Crypto Detector - Local Workflow',
+          version: '1.0.0'
+        }],
+        component: {
+          type: 'application',
+          name: path.basename(workspaceRoot),
+          version: '1.0.0'
         },
-        evidence: {
-          occurrences: d.detectionContexts?.map(ctx => ({
-            location: ctx.filePath,
-            lineNumbers: ctx.lineNumbers,
-            snippet: (ctx.snippet || '').substring(0, 300)
-          })) || []
-        }
-      })),
-      // Dependencies
-      ...dependencies.map((dep, i) => ({
-        type: 'library',
-        'bom-ref': `dep-${i}`,
-        name: dep.name,
-        version: dep.version,
         properties: [
-          { name: 'source', value: dep.source }
+          { name: 'analysis:languages', value: matrix.languages.join(', ') },
+          { name: 'analysis:totalFiles', value: String(matrix.totalFiles) },
+          { name: 'analysis:totalBytes', value: String(matrix.totalBytes) },
+          { name: 'analysis:timestamp', value: new Date().toISOString() }
         ]
-      }))
-    ],
-    dependencies: dependencies.map((dep, i) => ({
-      ref: `dep-${i}`,
-      dependsOn: []
-    })),
-    statistics: {
-      totalDetected: detections.length,
-      highRisk: detections.filter(d => d.severity === 'high').length,
-      mediumRisk: detections.filter(d => d.severity === 'medium').length,
-      lowRisk: detections.filter(d => d.severity === 'low').length,
-      quantumSafe: detections.filter(d => d.quantumSafe === true).length,
-      quantumVulnerable: detections.filter(d => d.quantumSafe === false).length,
-      byLanguage: matrix.stats.map(s => ({
-        language: s.language,
-        detections: s.detections.length,
-        files: s.fileCount
-      }))
-    }
-  };
+      },
+      components: [
+        // Main cryptographic assets
+        ...detections.map((d, i) => ({
+          type: 'cryptographic-asset',
+          'bom-ref': d.id || `asset-${i}`,
+          name: d.name || 'Unknown',
+          cryptoProperties: {
+            assetType: d.assetType || 'algorithm',
+            algorithmProperties: {
+              primitive: d.primitive || d.type || 'unknown',
+              cryptoFunctions: [d.description || 'unknown']
+            },
+            quantumSafe: String(d.quantumSafe || 'unknown'),
+            severity: d.severity || 'unknown',
+            riskScore: d.riskScore || d.score || 0
+          },
+          evidence: {
+            occurrences: d.detectionContexts?.map(ctx => ({
+              location: ctx.filePath,
+              lineNumbers: ctx.lineNumbers,
+              snippet: (ctx.snippet || '').substring(0, 300)
+            })) || []
+          }
+        })),
+        // Dependencies
+        ...dependencies.map((dep, i) => ({
+          type: 'library',
+          'bom-ref': `dep-${i}`,
+          name: dep.name,
+          version: dep.version,
+          properties: [
+            { name: 'source', value: dep.source }
+          ]
+        }))
+      ],
+      dependencies: dependencies.map((dep, i) => ({
+        ref: `dep-${i}`,
+        dependsOn: []
+      })),
+      statistics: {
+        totalDetected: detections.length,
+        highRisk: detections.filter(d => d.severity === 'high').length,
+        mediumRisk: detections.filter(d => d.severity === 'medium').length,
+        lowRisk: detections.filter(d => d.severity === 'low').length,
+        quantumSafe: detections.filter(d => d.quantumSafe === true).length,
+        quantumVulnerable: detections.filter(d => d.quantumSafe === false).length,
+        byLanguage: matrix.stats.map(s => ({
+          language: s.language,
+          detections: s.detections.length,
+          files: s.fileCount
+        }))
+      }
+    };
 
-  await fs.writeFile(
-    path.join(outputDir, 'cbom-report.json'),
-    JSON.stringify(cbom, null, 2)
-  );
+    const cbomPath = path.join(outputDir, 'cbom-report.json');
+    const cbomContent = JSON.stringify(cbom, null, 2);
+    
+    console.log(`[generateComprehensiveCBOM] Writing to: ${cbomPath}`);
+    console.log(`[generateComprehensiveCBOM] Content length: ${cbomContent.length} bytes`);
+    
+    await fs.writeFile(cbomPath, cbomContent, 'utf8');
+    
+    // Verify the file was written
+    const stats = await fs.stat(cbomPath);
+    console.log(`[generateComprehensiveCBOM] File written successfully: ${stats.size} bytes`);
+    
+  } catch (err) {
+    console.error('[generateComprehensiveCBOM] Error:', err);
+    throw err;
+  }
 }
 
 /**

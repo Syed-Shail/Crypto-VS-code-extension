@@ -226,6 +226,13 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('⚙️ Running crypto-detector.runLocalWorkflow command');
     await runLocalWorkflow();
   });
+  const testCbomCmd = vscode.commands.registerCommand('crypto-detector.testCBOM', async () => {
+  console.log('🧪 Running test CBOM generation');
+  const { testCBOMGeneration } = await import('./commands/runLocalWorkflow');
+  await testCBOMGeneration();
+});
+
+context.subscriptions.push(testCbomCmd);
 
   // Register all commands
   context.subscriptions.push(
