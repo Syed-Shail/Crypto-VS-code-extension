@@ -1,4 +1,4 @@
-// src/extension.ts
+// src/extension.ts - Updated with new advanced command
 
 import * as vscode from 'vscode';
 import * as parser from './parser/index';
@@ -7,6 +7,7 @@ import { generateAndDownloadCbom } from './parser/report-writer';
 import * as highlighter from './highlighter';
 import { getDashboardHtml } from './dashboard';
 import { scanGithubRepo } from './commands/scanGithubRepo';
+import { scanGithubRepoAdvanced } from './commands/scanGithubAdvanced';
 import { viewCbom } from './commands/viewCbom';
 
 /**
@@ -187,12 +188,23 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   /**
-   * Command: Scan GitHub Repository
+   * Command: Scan GitHub Repository (Basic)
    */
   const scanGithubCmd = vscode.commands.registerCommand('crypto-detector.scanGithubRepo', async () => {
     console.log('🐙 Running crypto-detector.scanGithubRepo command');
     await scanGithubRepo();
   });
+
+  /**
+   * NEW Command: Scan GitHub Repository (Advanced)
+   */
+  const scanGithubAdvancedCmd = vscode.commands.registerCommand(
+    'crypto-detector.scanGithubRepoAdvanced',
+    async () => {
+      console.log('🚀 Running crypto-detector.scanGithubRepoAdvanced command');
+      await scanGithubRepoAdvanced();
+    }
+  );
 
   /**
    * Command: View/Visualize CBOM File
@@ -224,6 +236,7 @@ export function activate(context: vscode.ExtensionContext) {
     scanWorkspaceCmd, 
     exportCbomCmd,
     scanGithubCmd,
+    scanGithubAdvancedCmd,
     viewCbomCmd,
     showDashboardCmd, 
     output
@@ -234,6 +247,7 @@ export function activate(context: vscode.ExtensionContext) {
   console.log('  - crypto-detector.scanWorkspace');
   console.log('  - crypto-detector.exportCbom');
   console.log('  - crypto-detector.scanGithubRepo');
+  console.log('  - crypto-detector.scanGithubRepoAdvanced (NEW)');
   console.log('  - crypto-detector.viewCbom');
   console.log('  - crypto-detector.showDashboard');
 }

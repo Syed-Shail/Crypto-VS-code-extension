@@ -2,7 +2,7 @@
   "name": "crypto-detector",
   "displayName": "Crypto Algorithm Detector",
   "description": "Automatically detects and highlights cryptographic algorithms (e.g., SHA256, RSA, Kyber) in your source file or entire workspace, and exports a CBOM report.",
-  "version": "0.0.2",
+  "version": "2.0.0",
   "publisher": "syedshail",
   "repository": {
     "type": "git",
@@ -12,40 +12,66 @@
     "vscode": "^1.80.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Programming Languages",
+    "Linters"
+  ],
+  "keywords": [
+    "cryptography",
+    "security",
+    "quantum",
+    "post-quantum",
+    "cbom",
+    "sarif",
+    "codeql"
   ],
   "main": "./out/extension.js",
+  "bin": {
+    "crypto-detector": "./out/cli.js"
+  },
   "contributes": {
     "commands": [
       {
         "command": "crypto-detector.detectCrypto",
         "title": "Crypto Detector: Scan Current File",
-        "category": "Crypto Detector"
+        "category": "Crypto Detector",
+        "icon": "$(search)"
       },
       {
         "command": "crypto-detector.scanWorkspace",
         "title": "Crypto Detector: Scan Entire Workspace",
-        "category": "Crypto Detector"
+        "category": "Crypto Detector",
+        "icon": "$(folder)"
       },
       {
         "command": "crypto-detector.exportCbom",
         "title": "Crypto Detector: Export CBOM (cbom.json)",
-        "category": "Crypto Detector"
+        "category": "Crypto Detector",
+        "icon": "$(package)"
       },
       {
         "command": "crypto-detector.scanGithubRepo",
-        "title": "Crypto Detector: Scan GitHub Repository",
-        "category": "Crypto Detector"
+        "title": "Crypto Detector: Scan GitHub Repository (Basic)",
+        "category": "Crypto Detector",
+        "icon": "$(github)"
+      },
+      {
+        "command": "crypto-detector.scanGithubRepoAdvanced",
+        "title": "Crypto Detector: Scan GitHub Repository (Advanced)",
+        "category": "Crypto Detector",
+        "icon": "$(rocket)"
       },
       {
         "command": "crypto-detector.viewCbom",
         "title": "Crypto Detector: Visualize CBOM File",
-        "category": "Crypto Detector"
+        "category": "Crypto Detector",
+        "icon": "$(graph)"
       },
       {
         "command": "crypto-detector.showDashboard",
         "title": "Crypto Detector: Show Dashboard",
-        "category": "Crypto Detector"
+        "category": "Crypto Detector",
+        "icon": "$(dashboard)"
       }
     ],
     "configuration": {
@@ -72,29 +98,69 @@
           "type": "boolean",
           "default": true,
           "description": "If true, writes a cbom.json report after scanning."
+        },
+        "cryptoDetector.useCodeQL": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use CodeQL for deep analysis (requires CodeQL CLI to be installed)."
+        },
+        "cryptoDetector.githubToken": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub Personal Access Token for API access (dependency analysis, Code Scanning uploads)."
+        },
+        "cryptoDetector.analyzeDependencies": {
+          "type": "boolean",
+          "default": false,
+          "description": "Analyze dependency graph when scanning GitHub repositories."
         }
       }
+    },
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "crypto-detector.detectCrypto",
+          "when": "resourceLangId in crypto-detector.supportedLanguages",
+          "group": "crypto-detector"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "crypto-detector.detectCrypto",
+          "when": "editorTextFocus",
+          "group": "crypto-detector"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "crypto-detector.scanGithubRepoAdvanced",
+          "when": "true"
+        }
+      ]
     }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./ && node scripts/copy-resources.js",
+    "compile": "tsc -p ./ && npm run copy-resources",
     "watch": "tsc -watch -p ./",
-    "postinstall": "echo 'Install complete. Run npm run compile to build.'"
+    "setup": "node scripts/download-grammars.js",
+    "postinstall": "node scripts/download-grammars.js || echo 'Warning: Grammar download failed'",
+    "copy-resources": "node scripts/copy-resources.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
-    "@babel/parser": "^7.28.5",
-    "@babel/traverse": "^7.28.5",
-    "@electron/rebuild": "^4.0.1",
     "@types/node": "^18.19.130",
     "@types/vscode": "^1.105.0",
-    "ts-node": "^10.9.2",
+    "@vscode/vsce": "^2.22.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@octokit/rest": "^20.0.2",
     "chart.js": "^4.5.1",
+    "commander": "^11.1.0",
     "simple-git": "^3.30.0",
-    "tree-sitter-javascript": "^0.25.0",
-    "web-tree-sitter": "^0.25.10"
+    "tree-sitter-wasms": "^0.1.13",
+    "web-tree-sitter": "^0.20.8"
   }
 }
