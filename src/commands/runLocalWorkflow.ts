@@ -161,7 +161,6 @@ async function runWorkflowOnGitHub() {
     async (progress, token) => {
       try {
         progress.report({ message: `Cloning ${normalizedUrl}...` });
-        
         const git = simpleGit();
         await git.clone(normalizedUrl, tempDir);
 
