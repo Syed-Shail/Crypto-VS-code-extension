@@ -1,104 +1,121 @@
-/* src/extension.ts
-   VS Code extension entrypoint that reuses the shared scan engine.
-*/
-
-import * as vscode from 'vscode';
-import * as path from 'path';
-import {
-  scanFile,
-  scanFolder,
-  scanGithubRepo,
-  generateCBOM,
-  generateDashboardHtml,
-  openInBrowser
-} from './core/scan-engine';
+// src/extension.ts — Final Unified VS Code Entry
+import * as vscode from "vscode";
+import * as path from "path";
+import * as os from "os";
+import { scanFile, scanFolder, scanGithubRepo, generateCBOM, generateDashboardHtml, openInBrowser } from "./core/scan-engine";
 
 export function activate(context: vscode.ExtensionContext) {
-  // Use globalStorage for default output directory if available
-  const defaultOutBase = context.globalStorageUri ? context.globalStorageUri.fsPath : path.join(context.extensionPath, 'crypto-analysis');
+  console.log("Crypto Detector Extension Activated");
 
-  /* ---------- Command: Scan File (uses active editor or explicit uri) ---------- */
-  const scanFileCmd = vscode.commands.registerCommand('crypto-detector.scan-file', async (uri?: vscode.Uri) => {
-    try {
+  /* ---------------------------------------------------
+     CMD: Scan Current File
+  --------------------------------------------------- */
+  context.subscriptions.push(
+    vscode.commands.registerCommand("crypto-detector.scan-file", async () => {
       const editor = vscode.window.activeTextEditor;
-      const fileUri = uri ?? editor?.document.uri;
-      if (!fileUri) { vscode.window.showErrorMessage('No file to scan. Open a file or use the explorer context menu.'); return; }
-      const filePath = fileUri.fsPath;
+      if (!editor) return vscode.window.showErrorMessage("No active file.");
+
+      const filePath = editor.document.uri.fsPath;
+
       const assets = await scanFile(filePath);
 
-      const outDir = path.join(defaultOutBase, 'vscode-file');
-      await vscode.workspace.fs.createDirectory(vscode.Uri.file(outDir));
-      const cbomPath = path.join(outDir, `${path.basename(filePath)}-cbom.json`);
-      await generateCBOM(assets, cbomPath);
-      const dashboardPath = path.join(outDir, `${path.basename(filePath)}-dashboard.html`);
-      generateDashboardHtml(assets, dashboardPath);
+      const outputDir = path.join(os.tmpdir(), "crypto-detector-file");
+      const dashboard = path.join(outputDir, "dashboard-file.html");
+      const cbom = path.join(outputDir, "cbom-file.json");
 
-      openInBrowser(dashboardPath);
-      vscode.window.showInformationMessage(`Scan complete: ${assets.length} detection(s). Dashboard: ${dashboardPath}`);
-    } catch (err: any) {
-      vscode.window.showErrorMessage('Scan failed: ' + (err.message || err));
-    }
-  });
+      generateDashboardHtml(assets, dashboard);
+      await generateCBOM(assets, cbom);
 
-  /* ---------- Command: Scan Workspace (first workspace folder) ---------- */
-  const scanWorkspaceCmd = vscode.commands.registerCommand('crypto-detector.scan-workspace', async () => {
-    try {
-      const folders = vscode.workspace.workspaceFolders;
-      if (!folders || folders.length === 0) { vscode.window.showErrorMessage('Open a workspace folder first.'); return; }
-      const root = folders[0].uri.fsPath;
+      vscode.window.showInformationMessage(`Scan complete. Dashboard: ${dashboard}`);
+      openInBrowser(dashboard);
+    })
+  );
+
+  /* ---------------------------------------------------
+     CMD: Scan Workspace
+  --------------------------------------------------- */
+  context.subscriptions.push(
+    vscode.commands.registerCommand("crypto-detector.scan-workspace", async () => {
+      if (!vscode.workspace.workspaceFolders) {
+        return vscode.window.showErrorMessage("No workspace open.");
+      }
+
+      const root = vscode.workspace.workspaceFolders[0].uri.fsPath;
+
       const assets = await scanFolder(root);
 
-      const outDir = path.join(defaultOutBase, 'vscode-workspace');
-      await vscode.workspace.fs.createDirectory(vscode.Uri.file(outDir));
-      const cbomPath = path.join(outDir, `workspace-cbom.json`);
-      await generateCBOM(assets, cbomPath);
-      const dashboardPath = path.join(outDir, `workspace-dashboard.html`);
-      generateDashboardHtml(assets, dashboardPath);
+      const outputDir = path.join(os.tmpdir(), "crypto-detector-workspace");
+      const dashboard = path.join(outputDir, "dashboard-workspace.html");
+      const cbom = path.join(outputDir, "cbom-workspace.json");
 
-      openInBrowser(dashboardPath);
-      vscode.window.showInformationMessage(`Workspace scan complete: ${assets.length} detections`);
-    } catch (err: any) {
-      vscode.window.showErrorMessage('Workspace scan failed: ' + (err.message || err));
-    }
-  });
+      generateDashboardHtml(assets, dashboard);
+      await generateCBOM(assets, cbom);
 
-  /* ---------- Command: Scan GitHub ---------- */
-  const scanGithubCmd = vscode.commands.registerCommand('crypto-detector.scan-github', async () => {
-    try {
-      const repoUrl = await vscode.window.showInputBox({ prompt: 'Enter GitHub repo URL (https://github.com/user/repo or git@github.com:user/repo.git)' });
+      vscode.window.showInformationMessage(`Workspace scan complete. Dashboard: ${dashboard}`);
+      openInBrowser(dashboard);
+    })
+  );
+
+  /* ---------------------------------------------------
+     CMD: Scan GitHub Repo
+  --------------------------------------------------- */
+  context.subscriptions.push(
+    vscode.commands.registerCommand("crypto-detector.scan-github", async () => {
+      const repoUrl = await vscode.window.showInputBox({ prompt: "Enter GitHub repository URL" });
       if (!repoUrl) return;
-      const { assets, repoPath } = await scanGithubRepo(repoUrl);
 
-      const outDir = path.join(defaultOutBase, 'vscode-github');
-      await vscode.workspace.fs.createDirectory(vscode.Uri.file(outDir));
-      const repoName = path.basename(repoPath);
-      const cbomPath = path.join(outDir, `${repoName}-cbom.json`);
-      await generateCBOM(assets, cbomPath);
-      const dashboardPath = path.join(outDir, `${repoName}-dashboard.html`);
+      const outputDir = path.join(os.tmpdir(), "crypto-detector-github");
+
+      const result = await scanGithubRepo(repoUrl, outputDir);
+
+      vscode.window.showInformationMessage(
+        `GitHub Scan Finished — ${result.detections} detections.\nDashboard: ${result.dashboardPath}`
+      );
+
+      openInBrowser(result.dashboardPath);
+    })
+  );
+
+  /* ---------------------------------------------------
+     CMD: Export CBOM
+  --------------------------------------------------- */
+  context.subscriptions.push(
+    vscode.commands.registerCommand("crypto-detector.export-cbom", async () => {
+      if (!vscode.workspace.workspaceFolders)
+        return vscode.window.showErrorMessage("Open a workspace to export CBOM.");
+
+      const root = vscode.workspace.workspaceFolders[0].uri.fsPath;
+
+      const assets = await scanFolder(root);
+
+      const saveUri = await vscode.window.showSaveDialog({ filters: { JSON: ["json"] }, defaultUri: vscode.Uri.file("cbom.json") });
+      if (!saveUri) return;
+
+      await generateCBOM(assets, saveUri.fsPath);
+
+      vscode.window.showInformationMessage(`CBOM exported: ${saveUri.fsPath}`);
+    })
+  );
+
+  /* ---------------------------------------------------
+     CMD: Show Dashboard
+  --------------------------------------------------- */
+  context.subscriptions.push(
+    vscode.commands.registerCommand("crypto-detector.show-dashboard", async () => {
+      if (!vscode.workspace.workspaceFolders)
+        return vscode.window.showErrorMessage("Open a workspace to show dashboard.");
+
+      const root = vscode.workspace.workspaceFolders[0].uri.fsPath;
+
+      const assets = await scanFolder(root);
+
+      const dashboardPath = path.join(os.tmpdir(), "crypto-detector-dashboard.html");
       generateDashboardHtml(assets, dashboardPath);
 
+      vscode.window.showInformationMessage(`Dashboard generated: ${dashboardPath}`);
       openInBrowser(dashboardPath);
-      vscode.window.showInformationMessage(`GitHub scan complete: ${assets.length} detections`);
-    } catch (err: any) {
-      vscode.window.showErrorMessage('GitHub scan failed: ' + (err.message || err));
-    }
-  });
-
-  /* ---------- Command: Export CBOM (helper) ---------- */
-  const exportCbomCmd = vscode.commands.registerCommand('crypto-detector.export-cbom', async () => {
-    vscode.window.showInformationMessage('Use the CLI `export-cbom <inputJson>` to convert a raw scan_json into a CycloneDX CBOM file.');
-  });
-
-  /* ---------- Command: Show Dashboard (open HTML file) ---------- */
-  const showDashboardCmd = vscode.commands.registerCommand('crypto-detector.show-dashboard', async () => {
-    const files = await vscode.window.showOpenDialog({ canSelectMany: false, filters: { 'HTML': ['html'] } });
-    if (!files || files.length === 0) return;
-    openInBrowser(files[0].fsPath);
-  });
-
-  context.subscriptions.push(scanFileCmd, scanWorkspaceCmd, scanGithubCmd, exportCbomCmd, showDashboardCmd);
+    })
+  );
 }
 
-export function deactivate() {
-  // nothing to clean up currently
-}
+export function deactivate() {}

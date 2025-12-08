@@ -125,13 +125,15 @@
   },
 
  
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "package": "vsce package",
-    "publish": "vsce publish"
-  },
+ "scripts": {
+  "vscode:prepublish": "npm run compile",
+  "compile": "tsc -p ./ && npm run postcompile",
+  "postcompile": "node scripts/fix-shebang.js",
+  "watch": "tsc -watch -p ./",
+  "package": "vsce package",
+  "publish": "vsce publish"
+},
+
 
  
   "devDependencies": {

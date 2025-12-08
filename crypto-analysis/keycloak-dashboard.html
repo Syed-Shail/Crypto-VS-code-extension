@@ -1,0 +1,9135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Crypto Analysis Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root { --bg:#f4f6fb; --card:#ffffff; --muted:#6b7280; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); padding:24px; }
+    .container { max-width:1200px; margin:0 auto; background:var(--card); border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(2,6,23,0.08); }
+    h1 { margin:0 0 12px 0; font-size:22px; }
+    .stats { display:flex; gap:12px; margin:16px 0 24px 0; }
+    .stat { flex:1; padding:14px; border-radius:10px; color:white; background:linear-gradient(90deg,#667eea,#764ba2); text-align:center; }
+    .stat .num { font-size:24px; font-weight:700; }
+    .charts { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:20px; }
+    .card { background:#fff; padding:14px; border-radius:10px; box-shadow: 0 6px 18px rgba(2,6,23,0.04); }
+    table { width:100%; border-collapse:collapse; margin-top:12px; }
+    th, td { padding:10px 8px; text-align:left; border-bottom:1px solid #eef2f7; font-size:13px; }
+    th { background:#fbfdff; font-weight:600; color:#111827; }
+    .severity-high { color:#d32f2f; font-weight:700; }
+    .severity-medium { color:#f57c00; font-weight:700; }
+    .severity-low { color:#388e3c; font-weight:700; }
+    @media (max-width:900px) { .charts { grid-template-columns: 1fr; } .stats { flex-direction:column; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔐 Crypto Analysis Dashboard</h1>
+
+    <div class="stats" role="region" aria-label="summary stats">
+      <div class="stat"><div class="num">1003</div><div class="label">Total Assets</div></div>
+      <div class="stat"><div class="num">744</div><div class="label">High Risk</div></div>
+      <div class="stat"><div class="num">259</div><div class="label">Medium Risk</div></div>
+      <div class="stat"><div class="num">0</div><div class="label">Low Risk</div></div>
+    </div>
+
+    <div class="charts" role="region" aria-label="charts">
+      <div class="card">
+        <h3 style="margin:0 0 10px 0;">Risk Distribution</h3>
+        <canvas id="riskChart" width="400" height="260" aria-label="Risk distribution chart"></canvas>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 10px 0;">Quantum Readiness</h3>
+        <canvas id="quantumChart" width="400" height="260" aria-label="Quantum readiness chart"></canvas>
+      </div>
+    </div>
+
+    <div class="card" role="region" aria-label="detected algorithms">
+      <h3 style="margin:0 0 10px 0;">Detected Algorithms</h3>
+      <div style="overflow:auto; max-height:480px;">
+        <table>
+          <thead>
+            <tr><th>Algorithm</th><th>Type</th><th>Quantum-Safe</th><th>Severity</th><th>Risk Score</th><th>Occurrences</th></tr>
+          </thead>
+          <tbody>
+            
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA384</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA384</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA384</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA384</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA384</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA3-256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DES</strong></td>
+      <td>symmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA384</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>AES</strong></td>
+      <td>symmetric</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECC</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>Ed25519</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA256</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA512</strong></td>
+      <td>hash</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>ECDSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>RSA</strong></td>
+      <td>asymmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DES</strong></td>
+      <td>symmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DES</strong></td>
+      <td>symmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DES</strong></td>
+      <td>symmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DES</strong></td>
+      <td>symmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>MD5</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>SHA1</strong></td>
+      <td>hash</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>HMAC</strong></td>
+      <td>mac</td>
+      <td>partial</td>
+      <td class="severity-medium">MEDIUM</td>
+      <td>55</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>DES</strong></td>
+      <td>symmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+
+    <tr>
+      <td><strong>3DES</strong></td>
+      <td>symmetric</td>
+      <td>false</td>
+      <td class="severity-high">HIGH</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    (function(){
+      const riskCtx = document.getElementById('riskChart').getContext('2d');
+      new Chart(riskCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['High','Medium','Low'],
+          datasets: [{
+            data: [744, 259, 0],
+            backgroundColor: ['#d32f2f','#f57c00','#388e3c'],
+            hoverOffset: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+
+      const qCtx = document.getElementById('quantumChart').getContext('2d');
+      new Chart(qCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Quantum-Safe','Quantum-Vulnerable'],
+          datasets: [{
+            label: 'Count',
+            data: [0, 744],
+            backgroundColor: ['#388e3c','#d32f2f']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
