@@ -1,8 +1,8 @@
 {
   "name": "crypto-detector",
   "displayName": "Crypto Algorithm Detector",
-  "description": "Automatically detects and highlights cryptographic algorithms (e.g., SHA256, RSA, Kyber) in your source file or entire workspace, and exports a CBOM report.",
-  "version": "2.0.0",
+  "description": "Detects cryptographic algorithms in source code, scans GitHub repos, exports CBOMs, and generates dashboards.",
+  "version": "2.1.1",
   "publisher": "syedshail",
   "repository": {
     "type": "git",
@@ -20,158 +20,128 @@
     "cryptography",
     "security",
     "quantum",
-    "post-quantum",
     "cbom",
+    "cli",
     "sarif",
-    "codeql",
-    "cli"
+    "code-analysis"
   ],
+
+
   "main": "./out/extension.js",
+
+ 
   "bin": {
     "crypto-detector": "./out/cli.js"
   },
+
+
   "activationEvents": [
-  "onCommand:crypto-detector.detectCrypto",
-  "onCommand:crypto-detector.scanWorkspace",
-  "onCommand:crypto-detector.exportCbom",
-  "onCommand:crypto-detector.scanGithubRepo",
-  "onCommand:crypto-detector.scanGithubRepoAdvanced",
-  "onCommand:crypto-detector.viewCbom",
-  "onCommand:crypto-detector.showDashboard",
-  "onCommand:crypto-detector.runLocalWorkflow"
-],
+    "onCommand:crypto-detector.scan-file",
+    "onCommand:crypto-detector.scan-workspace",
+    "onCommand:crypto-detector.scan-github",
+    "onCommand:crypto-detector.export-cbom",
+    "onCommand:crypto-detector.show-dashboard"
+  ],
+
+ 
   "contributes": {
     "commands": [
       {
-        "command": "crypto-detector.detectCrypto",
+        "command": "crypto-detector.scan-file",
         "title": "Crypto Detector: Scan Current File",
         "category": "Crypto Detector",
         "icon": "$(search)"
       },
       {
-        "command": "crypto-detector.scanWorkspace",
+        "command": "crypto-detector.scan-workspace",
         "title": "Crypto Detector: Scan Entire Workspace",
         "category": "Crypto Detector",
         "icon": "$(folder)"
       },
       {
-        "command": "crypto-detector.exportCbom",
-        "title": "Crypto Detector: Export CBOM (cbom.json)",
-        "category": "Crypto Detector",
-        "icon": "$(package)"
-      },
-      {
-        "command": "crypto-detector.scanGithubRepo",
-        "title": "Crypto Detector: Scan GitHub Repository (Basic)",
+        "command": "crypto-detector.scan-github",
+        "title": "Crypto Detector: Scan GitHub Repository",
         "category": "Crypto Detector",
         "icon": "$(github)"
       },
       {
-        "command": "crypto-detector.scanGithubRepoAdvanced",
-        "title": "Crypto Detector: Scan GitHub Repository (Advanced)",
+        "command": "crypto-detector.export-cbom",
+        "title": "Crypto Detector: Export CBOM",
         "category": "Crypto Detector",
-        "icon": "$(rocket)"
+        "icon": "$(package)"
       },
       {
-        "command": "crypto-detector.viewCbom",
-        "title": "Crypto Detector: Visualize CBOM File",
-        "category": "Crypto Detector",
-        "icon": "$(graph)"
-      },
-      {
-        "command": "crypto-detector.showDashboard",
+        "command": "crypto-detector.show-dashboard",
         "title": "Crypto Detector: Show Dashboard",
         "category": "Crypto Detector",
-        "icon": "$(dashboard)"
-      },
-      {
-        "command": "crypto-detector.runLocalWorkflow",
-        "title": "Crypto Detector: Run Complete Workflow (Matrix + Full Analysis)",
-        "category": "Crypto Detector",
-        "icon": "$(gear)"
+        "icon": "$(graph)"
       }
     ],
+
+   
+    "menus": {
+      "editor/context": [
+        {
+          "command": "crypto-detector.scan-file",
+          "when": "editorTextFocus",
+          "group": "crypto-detector"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "crypto-detector.scan-workspace",
+          "group": "crypto-detector"
+        }
+      ]
+    },
+
+   
     "configuration": {
       "type": "object",
       "title": "Crypto Detector Settings",
       "properties": {
         "cryptoDetector.languageGlobs": {
           "type": "array",
-          "default": [
-            "**/*.{js,ts,py,java,go,rs,cpp,c,h}"
-          ],
-          "description": "File patterns (globs) to include when scanning the workspace."
+          "default": ["**/*.{js,ts,py,java,go,rs,cpp,c,h}"],
+          "description": "File patterns to include when scanning."
         },
         "cryptoDetector.excludeGlobs": {
           "type": "array",
-          "default": [
-            "**/node_modules/**",
-            "**/.git/**",
-            "**/venv/**"
-          ],
-          "description": "Folders or file patterns to exclude from scanning."
+          "default": ["**/node_modules/**", "**/.git/**", "**/dist/**", "**/build/**"],
+          "description": "Folders or file patterns to exclude."
         },
         "cryptoDetector.outputCbom": {
           "type": "boolean",
           "default": true,
-          "description": "If true, writes a cbom.json report after scanning."
-        },
-        "cryptoDetector.useCodeQL": {
-          "type": "boolean",
-          "default": false,
-          "description": "Use CodeQL for deep analysis (requires CodeQL CLI to be installed)."
+          "description": "If true, writes a cbom.json report."
         },
         "cryptoDetector.githubToken": {
           "type": "string",
           "default": "",
-          "description": "GitHub Personal Access Token for API access (dependency analysis, Code Scanning uploads)."
-        },
-        "cryptoDetector.analyzeDependencies": {
-          "type": "boolean",
-          "default": false,
-          "description": "Analyze dependency graph when scanning GitHub repositories."
+          "description": "GitHub Personal Access Token (optional, for future use)."
         }
       }
-    },
-    "menus": {
-      "explorer/context": [
-        {
-          "command": "crypto-detector.detectCrypto",
-          "when": "resourceLangId in crypto-detector.supportedLanguages",
-          "group": "crypto-detector"
-        }
-      ],
-      "editor/context": [
-        {
-          "command": "crypto-detector.detectCrypto",
-          "when": "editorTextFocus",
-          "group": "crypto-detector"
-        }
-      ],
-      "commandPalette": [
-        {
-          "command": "crypto-detector.scanGithubRepoAdvanced",
-          "when": "true"
-        }
-      ]
     }
   },
+
+ 
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./ && npm run copy-resources",
+    "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "setup": "node scripts/download-grammars.js",
-    "postinstall": "node scripts/download-grammars.js || echo 'Warning: Grammar download failed'",
-    "copy-resources": "node scripts/copy-resources.js",
     "package": "vsce package",
     "publish": "vsce publish"
   },
+
+ 
   "devDependencies": {
     "@types/node": "^18.19.130",
-    "@types/vscode": "^1.105.0",
+    "@types/vscode": "^1.80.0",
     "@vscode/vsce": "^2.22.0",
     "typescript": "^5.9.3"
   },
+
+ 
   "dependencies": {
     "@octokit/rest": "^20.0.2",
     "chart.js": "^4.5.1",
