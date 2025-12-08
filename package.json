@@ -30,6 +30,16 @@
   "bin": {
     "crypto-detector": "./out/cli.js"
   },
+  "activationEvents": [
+  "onCommand:crypto-detector.detectCrypto",
+  "onCommand:crypto-detector.scanWorkspace",
+  "onCommand:crypto-detector.exportCbom",
+  "onCommand:crypto-detector.scanGithubRepo",
+  "onCommand:crypto-detector.scanGithubRepoAdvanced",
+  "onCommand:crypto-detector.viewCbom",
+  "onCommand:crypto-detector.showDashboard",
+  "onCommand:crypto-detector.runLocalWorkflow"
+],
   "contributes": {
     "commands": [
       {

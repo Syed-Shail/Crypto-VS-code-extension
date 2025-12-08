@@ -1,177 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crypto Detector - Dashboard Report</title>
+  <title>Crypto Analysis Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #fff;
       padding: 20px;
       min-height: 100vh;
     }
     .container {
       max-width: 1400px;
       margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     }
     h1 {
-      text-align: center;
+      color: #333;
       margin-bottom: 30px;
-      font-size: 2.5em;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      font-size: 32px;
     }
-    .timestamp {
-      text-align: center;
-      opacity: 0.8;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
-    .summary-grid {
+    .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 20px;
       margin-bottom: 40px;
     }
-    .summary-card {
-      background: rgba(255,255,255,0.15);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
+    .stat-card {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
       padding: 24px;
+      border-radius: 8px;
       text-align: center;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-      transition: transform 0.2s;
     }
-    .summary-card:hover {
-      transform: translateY(-5px);
-    }
-    .summary-card h3 {
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 12px;
-      opacity: 0.9;
-    }
-    .summary-card .value {
+    .stat-value {
       font-size: 48px;
       font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.9;
     }
     .charts {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 24px;
+      gap: 30px;
       margin-bottom: 40px;
     }
-    .chart-card {
-      background: rgba(255,255,255,0.15);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    }
-    .chart-card h2 {
-      margin-bottom: 20px;
-      font-size: 18px;
+    .chart-container {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      background: rgba(255,255,255,0.15);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      margin-top: 20px;
     }
     th, td {
-      padding: 14px;
+      padding: 12px;
       text-align: left;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid #e0e0e0;
     }
     th {
-      background: rgba(0,0,0,0.2);
+      background: #f5f5f5;
       font-weight: 600;
-      text-transform: uppercase;
-      font-size: 13px;
-      letter-spacing: 0.5px;
+      color: #333;
     }
     tr:hover {
-      background: rgba(255,255,255,0.05);
+      background: #f9f9f9;
     }
-    .badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    .badge-high { background: #ef4444; }
-    .badge-medium { background: #f59e0b; }
-    .badge-low { background: #10b981; }
-    .badge-safe { background: #10b981; }
-    .badge-vulnerable { background: #ef4444; }
-    .badge-partial { background: #f59e0b; }
-    .footer {
-      text-align: center;
-      margin-top: 40px;
-      opacity: 0.7;
-      font-size: 14px;
-    }
+    .severity-high { color: #d32f2f; font-weight: bold; }
+    .severity-medium { color: #f57c00; font-weight: bold; }
+    .severity-low { color: #388e3c; font-weight: bold; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🔐 Cryptographic Analysis Report</h1>
-    <div class="timestamp">Generated on 12/8/2025, 5:08:58 PM</div>
+    <h1>🔐 Cryptographic Analysis Dashboard</h1>
     
-    <div class="summary-grid">
-      <div class="summary-card">
-        <h3>Total Assets</h3>
-        <div class="value">36</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">36</div>
+        <div class="stat-label">Total Assets</div>
       </div>
-      <div class="summary-card">
-        <h3>High Risk</h3>
-        <div class="value" style="color:#ef4444">13</div>
+      <div class="stat-card">
+        <div class="stat-value">13</div>
+        <div class="stat-label">High Risk</div>
       </div>
-      <div class="summary-card">
-        <h3>Medium Risk</h3>
-        <div class="value" style="color:#f59e0b">16</div>
+      <div class="stat-card">
+        <div class="stat-value">16</div>
+        <div class="stat-label">Medium Risk</div>
       </div>
-      <div class="summary-card">
-        <h3>Low Risk</h3>
-        <div class="value" style="color:#10b981">7</div>
-      </div>
-      <div class="summary-card">
-        <h3>Quantum-Safe</h3>
-        <div class="value" style="color:#10b981">7</div>
-      </div>
-      <div class="summary-card">
-        <h3>Vulnerable</h3>
-        <div class="value" style="color:#ef4444">13</div>
+      <div class="stat-card">
+        <div class="stat-value">7</div>
+        <div class="stat-label">Low Risk</div>
       </div>
     </div>
 
     <div class="charts">
-      <div class="chart-card">
-        <h2>Risk Distribution</h2>
+      <div class="chart-container">
+        <h3>Risk Distribution</h3>
         <canvas id="riskChart"></canvas>
       </div>
-      <div class="chart-card">
-        <h2>Quantum Readiness</h2>
+      <div class="chart-container">
+        <h3>Quantum Readiness</h3>
         <canvas id="quantumChart"></canvas>
       </div>
     </div>
 
+    <h2>Detected Algorithms</h2>
     <table>
       <thead>
         <tr>
           <th>Algorithm</th>
           <th>Type</th>
-          <th>Severity</th>
           <th>Quantum-Safe</th>
+          <th>Severity</th>
           <th>Risk Score</th>
           <th>Occurrences</th>
         </tr>
@@ -181,8 +132,8 @@
           <tr>
             <td><strong>MD5</strong></td>
             <td>hash</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -190,8 +141,8 @@
           <tr>
             <td><strong>MD5</strong></td>
             <td>hash</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -199,8 +150,8 @@
           <tr>
             <td><strong>SHA1</strong></td>
             <td>hash</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -208,8 +159,8 @@
           <tr>
             <td><strong>SHA1</strong></td>
             <td>hash</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -217,8 +168,8 @@
           <tr>
             <td><strong>SHA256</strong></td>
             <td>hash</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -226,8 +177,8 @@
           <tr>
             <td><strong>SHA256</strong></td>
             <td>hash</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -235,8 +186,8 @@
           <tr>
             <td><strong>SHA256</strong></td>
             <td>hash</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -244,8 +195,8 @@
           <tr>
             <td><strong>SHA512</strong></td>
             <td>hash</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -253,8 +204,8 @@
           <tr>
             <td><strong>SHA512</strong></td>
             <td>hash</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -262,8 +213,8 @@
           <tr>
             <td><strong>SHA3-256</strong></td>
             <td>hash</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -271,8 +222,8 @@
           <tr>
             <td><strong>HMAC</strong></td>
             <td>mac</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -280,8 +231,8 @@
           <tr>
             <td><strong>HMAC</strong></td>
             <td>mac</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -289,8 +240,8 @@
           <tr>
             <td><strong>HMAC</strong></td>
             <td>mac</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -298,8 +249,8 @@
           <tr>
             <td><strong>AES</strong></td>
             <td>symmetric</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -307,8 +258,8 @@
           <tr>
             <td><strong>AES</strong></td>
             <td>symmetric</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -316,8 +267,8 @@
           <tr>
             <td><strong>AES</strong></td>
             <td>symmetric</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -325,8 +276,8 @@
           <tr>
             <td><strong>DES</strong></td>
             <td>symmetric</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -334,8 +285,8 @@
           <tr>
             <td><strong>3DES</strong></td>
             <td>symmetric</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -343,8 +294,8 @@
           <tr>
             <td><strong>RC4</strong></td>
             <td>symmetric</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -352,8 +303,8 @@
           <tr>
             <td><strong>ChaCha20</strong></td>
             <td>symmetric</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -361,8 +312,8 @@
           <tr>
             <td><strong>RSA</strong></td>
             <td>asymmetric</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -370,8 +321,8 @@
           <tr>
             <td><strong>RSA</strong></td>
             <td>asymmetric</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -379,8 +330,8 @@
           <tr>
             <td><strong>ECC</strong></td>
             <td>asymmetric</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -388,8 +339,8 @@
           <tr>
             <td><strong>ECC</strong></td>
             <td>asymmetric</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -397,8 +348,8 @@
           <tr>
             <td><strong>Kyber</strong></td>
             <td>pqc</td>
-            <td><span class="badge badge-low">LOW</span></td>
-            <td><span class="badge badge-safe">true</span></td>
+            <td>true</td>
+            <td class="severity-low">LOW</td>
             <td>10</td>
             <td>1</td>
           </tr>
@@ -406,8 +357,8 @@
           <tr>
             <td><strong>Kyber</strong></td>
             <td>pqc</td>
-            <td><span class="badge badge-low">LOW</span></td>
-            <td><span class="badge badge-safe">true</span></td>
+            <td>true</td>
+            <td class="severity-low">LOW</td>
             <td>10</td>
             <td>1</td>
           </tr>
@@ -415,8 +366,8 @@
           <tr>
             <td><strong>Kyber</strong></td>
             <td>pqc</td>
-            <td><span class="badge badge-low">LOW</span></td>
-            <td><span class="badge badge-safe">true</span></td>
+            <td>true</td>
+            <td class="severity-low">LOW</td>
             <td>10</td>
             <td>1</td>
           </tr>
@@ -424,8 +375,8 @@
           <tr>
             <td><strong>Dilithium</strong></td>
             <td>pqc</td>
-            <td><span class="badge badge-low">LOW</span></td>
-            <td><span class="badge badge-safe">true</span></td>
+            <td>true</td>
+            <td class="severity-low">LOW</td>
             <td>10</td>
             <td>1</td>
           </tr>
@@ -433,8 +384,8 @@
           <tr>
             <td><strong>Dilithium</strong></td>
             <td>pqc</td>
-            <td><span class="badge badge-low">LOW</span></td>
-            <td><span class="badge badge-safe">true</span></td>
+            <td>true</td>
+            <td class="severity-low">LOW</td>
             <td>10</td>
             <td>1</td>
           </tr>
@@ -442,8 +393,8 @@
           <tr>
             <td><strong>Falcon</strong></td>
             <td>pqc</td>
-            <td><span class="badge badge-low">LOW</span></td>
-            <td><span class="badge badge-safe">true</span></td>
+            <td>true</td>
+            <td class="severity-low">LOW</td>
             <td>10</td>
             <td>1</td>
           </tr>
@@ -451,8 +402,8 @@
           <tr>
             <td><strong>SPHINCS+</strong></td>
             <td>pqc</td>
-            <td><span class="badge badge-low">LOW</span></td>
-            <td><span class="badge badge-safe">true</span></td>
+            <td>true</td>
+            <td class="severity-low">LOW</td>
             <td>10</td>
             <td>1</td>
           </tr>
@@ -460,8 +411,8 @@
           <tr>
             <td><strong>ECDSA</strong></td>
             <td>asymmetric</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -469,8 +420,8 @@
           <tr>
             <td><strong>ECDSA</strong></td>
             <td>asymmetric</td>
-            <td><span class="badge badge-high">HIGH</span></td>
-            <td><span class="badge badge-vulnerable">false</span></td>
+            <td>unknown</td>
+            <td class="severity-high">HIGH</td>
             <td>90</td>
             <td>1</td>
           </tr>
@@ -478,8 +429,8 @@
           <tr>
             <td><strong>HMAC</strong></td>
             <td>mac</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -487,8 +438,8 @@
           <tr>
             <td><strong>AES</strong></td>
             <td>symmetric</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
@@ -496,62 +447,40 @@
           <tr>
             <td><strong>AES</strong></td>
             <td>symmetric</td>
-            <td><span class="badge badge-medium">MEDIUM</span></td>
-            <td><span class="badge badge-partial">partial</span></td>
+            <td>partial</td>
+            <td class="severity-medium">MEDIUM</td>
             <td>55</td>
             <td>1</td>
           </tr>
         
       </tbody>
     </table>
-
-    <div class="footer">
-      <p>🔐 Generated by Crypto Detector CLI v2.0.0</p>
-      <p>For more information, visit the GitHub repository</p>
-    </div>
   </div>
 
   <script>
     new Chart(document.getElementById('riskChart'), {
       type: 'doughnut',
       data: {
-        labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+        labels: ['High', 'Medium', 'Low'],
         datasets: [{
           data: [13, 16, 7],
-          backgroundColor: ['#ef4444', '#f59e0b', '#10b981']
+          backgroundColor: ['#d32f2f', '#f57c00', '#388e3c']
         }]
-      },
-      options: {
-        plugins: {
-          legend: { labels: { color: '#fff', font: { size: 14 } } }
-        }
       }
     });
 
     new Chart(document.getElementById('quantumChart'), {
       type: 'bar',
       data: {
-        labels: ['Quantum-Safe', 'Vulnerable'],
+        labels: ['Quantum-Safe', 'Quantum-Vulnerable'],
         datasets: [{
-          label: 'Count',
-          data: [7, 13],
-          backgroundColor: ['#10b981', '#ef4444']
+          data: [7, 0],
+          backgroundColor: ['#388e3c', '#d32f2f']
         }]
       },
       options: {
-        plugins: {
-          legend: { display: false }
-        },
         scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { color: '#fff' },
-            grid: { color: 'rgba(255,255,255,0.1)' }
-          },
-          x: {
-            ticks: { color: '#fff' },
-            grid: { display: false }
-          }
+          y: { beginAtZero: true }
         }
       }
     });
