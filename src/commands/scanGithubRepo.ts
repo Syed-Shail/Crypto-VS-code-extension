@@ -1,4 +1,4 @@
-// src/commands/scanGithubRepo.ts
+// src/commands/scanGithubRepo.ts - Updated to show dashboard
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -6,7 +6,7 @@ import * as path from 'path';
 import simpleGit from 'simple-git';
 import * as parser from '../parser';
 import * as highlighter from '../highlighter';
-import { getDashboardHtml } from '../dashboard';
+import { getIBMStyleDashboard } from '../dashboard-ibm';
 import { generateAndDownloadCbom } from '../parser/report-writer';
 import { CryptoAsset } from '../parser/types';
 
@@ -88,28 +88,41 @@ export async function scanGithubRepo() {
         // Apply highlights (will only affect open editors)
         await highlighter.applyHighlights(results);
 
+        if (results.length === 0) {
+          vscode.window.showInformationMessage('✅ No cryptographic algorithms detected in repository.');
+          return;
+        }
+
         vscode.window.showInformationMessage(
           `✅ Scan complete. Found ${results.length} cryptographic algorithm(s).`
         );
 
+        // Show IBM-style dashboard
+        const repoName = repoUrl.split('/').pop()?.replace('.git', '') || 'GitHub Repository';
         const panel = vscode.window.createWebviewPanel(
           'cryptoDashboard',
-          'Crypto Risk Dashboard — GitHub Scan',
+          `Crypto Analysis - ${repoName}`,
           vscode.ViewColumn.One,
           { enableScripts: true, retainContextWhenHidden: true }
         );
-        panel.webview.html = getDashboardHtml(results);
+        
+        panel.webview.html = getIBMStyleDashboard(results);
 
         panel.webview.onDidReceiveMessage(async (message) => {
           if (message.command === 'generateCbom') {
             await generateAndDownloadCbom(results);
           }
         });
+
       } catch (err: any) {
         vscode.window.showErrorMessage(`❌ Error scanning GitHub repo: ${err.message}`);
       } finally {
         // cleanup optional: keep temp for debugging; remove if desired
-        // fs.rmSync(tempDir, { recursive: true, force: true });
+        try {
+          fs.rmSync(tempDir, { recursive: true, force: true });
+        } catch {
+          // Ignore cleanup errors
+        }
       }
     }
   );

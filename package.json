@@ -23,7 +23,8 @@
     "post-quantum",
     "cbom",
     "sarif",
-    "codeql"
+    "codeql",
+    "cli"
   ],
   "main": "./out/extension.js",
   "bin": {

@@ -1,4 +1,4 @@
-// src/extension.ts
+// src/extension.ts - Updated to show dashboard after all scans
 
 import * as vscode from 'vscode';
 import * as parser from './parser/index';
@@ -6,9 +6,37 @@ import { CryptoAsset } from './parser/types';
 import { generateAndDownloadCbom } from './parser/report-writer';
 import * as highlighter from './highlighter';
 import { getDashboardHtml } from './dashboard';
+import { getIBMStyleDashboard } from './dashboard-ibm';
 import { scanGithubRepo } from './commands/scanGithubRepo';
 import { viewCbom } from './commands/viewCbom';
 import { runLocalWorkflow } from './commands/runLocalWorkflow';
+
+/**
+ * Show dashboard with detected assets
+ */
+async function showDashboard(assets: CryptoAsset[], title: string = 'Crypto Risk Dashboard'): Promise<void> {
+  if (assets.length === 0) {
+    vscode.window.showInformationMessage('✅ No cryptographic algorithms detected.');
+    return;
+  }
+
+  const panel = vscode.window.createWebviewPanel(
+    'cryptoDashboard',
+    title,
+    vscode.ViewColumn.One,
+    { enableScripts: true, retainContextWhenHidden: true }
+  );
+
+  // Use IBM-style dashboard for better visuals
+  panel.webview.html = getIBMStyleDashboard(assets);
+
+  // Listen for CBOM generation requests from dashboard
+  panel.webview.onDidReceiveMessage(async (message) => {
+    if (message.command === 'generateCbom') {
+      await generateAndDownloadCbom(assets);
+    }
+  });
+}
 
 /**
  * Formats the detected crypto assets for display in VS Code output.
@@ -99,15 +127,8 @@ export function activate(context: vscode.ExtensionContext) {
           output.show(true);
 
           if (results.length > 0) {
-            await vscode.window.showInformationMessage(
-              `🔐 Detected ${results.length} cryptographic algorithm(s) in file. Generate CBOM file?`,
-              "Yes",
-              "No"
-            ).then(async (choice) => {
-              if (choice === "Yes") {
-                await generateAndDownloadCbom(results);
-              }
-            });
+            // Show dashboard automatically
+            await showDashboard(results, `Crypto Analysis - ${uri.fsPath.split('/').pop()}`);
           } else {
             vscode.window.showInformationMessage(`✅ No cryptographic algorithms found.`);
           }
@@ -155,21 +176,8 @@ export function activate(context: vscode.ExtensionContext) {
             return;
           }
 
-          // Show Dashboard View automatically after scan
-          const panel = vscode.window.createWebviewPanel(
-            'cryptoDashboard',
-            'Crypto Risk Dashboard',
-            vscode.ViewColumn.One,
-            { enableScripts: true, retainContextWhenHidden: true }
-          );
-          panel.webview.html = getDashboardHtml(results);
-
-          // Listen for button clicks from inside the WebView
-          panel.webview.onDidReceiveMessage(async (message) => {
-            if (message.command === 'generateCbom') {
-              await generateAndDownloadCbom(results);
-            }
-          });
+          // Show dashboard automatically
+          await showDashboard(results, 'Workspace Crypto Analysis');
 
         } catch (err: any) {
           console.error('❌ Error scanning workspace:', err);
@@ -188,11 +196,12 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   /**
-   * Command: Scan GitHub Repository
+   * Command: Scan GitHub Repository (Enhanced with Dashboard)
    */
   const scanGithubCmd = vscode.commands.registerCommand('crypto-detector.scanGithubRepo', async () => {
     console.log('🐙 Running crypto-detector.scanGithubRepo command');
     await scanGithubRepo();
+    // Note: scanGithubRepo now shows dashboard internally
   });
 
   /**
@@ -209,6 +218,7 @@ export function activate(context: vscode.ExtensionContext) {
   const showDashboardCmd = vscode.commands.registerCommand('crypto-detector.showDashboard', async () => {
     console.log('📊 Running crypto-detector.showDashboard command');
     
+    // Show empty dashboard with instructions
     const panel = vscode.window.createWebviewPanel(
       'cryptoDashboard',
       'Crypto Risk Dashboard',
@@ -216,7 +226,50 @@ export function activate(context: vscode.ExtensionContext) {
       { enableScripts: true, retainContextWhenHidden: true }
     );
 
-    panel.webview.html = getDashboardHtml([]);
+    panel.webview.html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body {
+            font-family: system-ui, sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            padding: 40px;
+            text-align: center;
+          }
+          h1 { color: #58a6ff; margin-bottom: 20px; }
+          p { font-size: 16px; line-height: 1.6; margin: 20px auto; max-width: 600px; }
+          .commands {
+            background: #161b22;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px auto;
+            max-width: 500px;
+            text-align: left;
+          }
+          code {
+            background: #21262d;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #79c0ff;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>🔐 Crypto Detector Dashboard</h1>
+        <p>No scan results available yet. Run a scan to see the analysis dashboard.</p>
+        <div class="commands">
+          <h3 style="color: #58a6ff; margin-top: 0;">Available Commands:</h3>
+          <ul style="line-height: 2;">
+            <li><code>Crypto Detector: Scan Current File</code></li>
+            <li><code>Crypto Detector: Scan Entire Workspace</code></li>
+            <li><code>Crypto Detector: Scan GitHub Repository</code></li>
+          </ul>
+        </div>
+      </body>
+      </html>
+    `;
   });
 
   /**
@@ -225,14 +278,16 @@ export function activate(context: vscode.ExtensionContext) {
   const runLocalWorkflowCmd = vscode.commands.registerCommand('crypto-detector.runLocalWorkflow', async () => {
     console.log('⚙️ Running crypto-detector.runLocalWorkflow command');
     await runLocalWorkflow();
+    // Note: runLocalWorkflow shows its own specialized dashboard
   });
-  const testCbomCmd = vscode.commands.registerCommand('crypto-detector.testCBOM', async () => {
-  console.log('🧪 Running test CBOM generation');
-  const { testCBOMGeneration } = await import('./commands/runLocalWorkflow');
-  await testCBOMGeneration();
-});
 
-context.subscriptions.push(testCbomCmd);
+  const testCbomCmd = vscode.commands.registerCommand('crypto-detector.testCBOM', async () => {
+    console.log('🧪 Running test CBOM generation');
+    const { testCBOMGeneration } = await import('./commands/runLocalWorkflow');
+    await testCBOMGeneration();
+  });
+
+  context.subscriptions.push(testCbomCmd);
 
   // Register all commands
   context.subscriptions.push(

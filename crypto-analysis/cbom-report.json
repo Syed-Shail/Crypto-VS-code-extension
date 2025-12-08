@@ -1,0 +1,522 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:1765193938454",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-12-08T11:38:58.454Z",
+    "tools": [
+      {
+        "vendor": "Syed Shail",
+        "name": "Crypto Detector CLI",
+        "version": "2.0.0"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:md5-9",
+      "name": "MD5",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:md5-30",
+      "name": "MD5",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:sha1-10",
+      "name": "SHA1",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:sha1-53",
+      "name": "SHA1",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:sha256-11",
+      "name": "SHA256",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:sha256-25",
+      "name": "SHA256",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:sha256-37",
+      "name": "SHA256",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:sha512-12",
+      "name": "SHA512",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:sha512-32",
+      "name": "SHA512",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:sha3-256-31",
+      "name": "SHA3-256",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:hmac-25",
+      "name": "HMAC",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:hmac-29",
+      "name": "HMAC",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:hmac-32",
+      "name": "HMAC",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:aes-17",
+      "name": "AES",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "symmetric"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:aes-18",
+      "name": "AES",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "symmetric"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:aes-38",
+      "name": "AES",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "symmetric"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:des-21",
+      "name": "DES",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "symmetric"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:3des-21",
+      "name": "3DES",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "symmetric"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:rc4-22",
+      "name": "RC4",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "symmetric"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:chacha20-57",
+      "name": "ChaCha20",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "symmetric"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:rsa-39",
+      "name": "RSA",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "asymmetric"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:rsa-55",
+      "name": "RSA",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "asymmetric"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:ecc-56",
+      "name": "ECC",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "asymmetric"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:ecc-41",
+      "name": "ECC",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "asymmetric"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:kyber-42",
+      "name": "Kyber",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pqc"
+        },
+        "quantumSafe": "true",
+        "severity": "low",
+        "riskScore": 10
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:kyber-47",
+      "name": "Kyber",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pqc"
+        },
+        "quantumSafe": "true",
+        "severity": "low",
+        "riskScore": 10
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:kyber-54",
+      "name": "Kyber",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pqc"
+        },
+        "quantumSafe": "true",
+        "severity": "low",
+        "riskScore": 10
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:dilithium-43",
+      "name": "Dilithium",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pqc"
+        },
+        "quantumSafe": "true",
+        "severity": "low",
+        "riskScore": 10
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:dilithium-48",
+      "name": "Dilithium",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pqc"
+        },
+        "quantumSafe": "true",
+        "severity": "low",
+        "riskScore": 10
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:falcon-49",
+      "name": "Falcon",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pqc"
+        },
+        "quantumSafe": "true",
+        "severity": "low",
+        "riskScore": 10
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:sphincs+-50",
+      "name": "SPHINCS+",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pqc"
+        },
+        "quantumSafe": "true",
+        "severity": "low",
+        "riskScore": 10
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:ecdsa-41",
+      "name": "ECDSA",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "asymmetric"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:ecdsa-56",
+      "name": "ECDSA",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "asymmetric"
+        },
+        "quantumSafe": "unknown",
+        "severity": "high",
+        "riskScore": 90
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:hmac-40",
+      "name": "HMAC",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:aes-21",
+      "name": "AES",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "symmetric"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "regex:aes-22",
+      "name": "AES",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "symmetric"
+        },
+        "quantumSafe": "partial",
+        "severity": "medium",
+        "riskScore": 55
+      }
+    }
+  ]
+}
