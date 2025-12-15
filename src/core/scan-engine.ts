@@ -1,7 +1,4 @@
-// src/core/scan-engine.ts
-// PART 1 of 5 — Imports, Types, Helpers
-// Paste PART 1 first, then PART 2..PART 5 in sequence.
-
+// src/core/scan-engine.ts - FIXED to use improved parser module
 import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
@@ -9,35 +6,19 @@ import * as os from 'os';
 import * as crypto from 'crypto';
 import { spawn } from 'child_process';
 import simpleGit from 'simple-git';
+import * as vscode from 'vscode';
+
+// Import the improved parser module
+import { regexDetector } from '../parser/regex-detector';
+import { CryptoAsset } from '../parser/types';
 
 /* ----------------------- Types ----------------------- */
-export interface CryptoAsset {
-  name: string;
-  type?: string;
-  primitive?: string;
-  assetType?: string;
-  description?: string;
-  quantumSafe?: boolean | 'partial' | 'unknown';
-  severity?: 'low' | 'medium' | 'high' | 'none' | string;
-  score?: number;
-  riskScore?: number;
-  reason?: string;
-  source?: string;
-  line?: number;
-  occurrences?: number;
-  id?: string;
-  detectionContexts?: Array<{
-    filePath?: string;
-    lineNumbers?: number[];
-    snippet?: string;
-  }>;
-}
+export { CryptoAsset };
 
 /* ----------------------- Helpers ----------------------- */
 
 /**
  * Cross-platform opener for HTML / file paths.
- * Attempts to spawn the native opener and quietly fails if not available.
  */
 export function openInBrowser(target: string): void {
   const platform = os.platform();
@@ -50,7 +31,6 @@ export function openInBrowser(target: string): void {
       args = [target];
       break;
     case 'win32':
-      // use cmd.exe start "" "<path>"
       command = 'cmd.exe';
       args = ['/c', 'start', '', target];
       break;
@@ -64,46 +44,8 @@ export function openInBrowser(target: string): void {
     const child = spawn(command, args, { detached: true, stdio: 'ignore' });
     child.unref();
   } catch (err) {
-    // silent - caller should print fallback guidance if desired
+    console.warn('[openInBrowser] Failed to open browser:', err);
   }
-}
-
-/* ----------------------- Rules loader & fallback ----------------------- */
-interface DetectionRule {
-  name: string;
-  primitive?: string;
-  type?: string;
-  quantumSafe?: boolean | 'partial' | 'unknown';
-  patterns: string[];
-  description?: string;
-  severity?: string;
-}
-
-/**
- * Load rules from parser/rules/crypto-rules.json relative to compiled JS.
- * If not present, return a conservative fallback set.
- */
-export function loadCryptoRules(): Record<string, DetectionRule[]> {
-  const rulesPath = path.join(__dirname, '..', 'parser', 'rules', 'crypto-rules.json');
-  try {
-    const rulesData = fsSync.readFileSync(rulesPath, 'utf8');
-    return JSON.parse(rulesData);
-  } catch (err) {
-    return getFallbackRules();
-  }
-}
-
-function getFallbackRules(): Record<string, DetectionRule[]> {
-  return {
-    common: [
-      { name: 'MD5', type: 'hash', quantumSafe: false, patterns: ['md5', 'MD5'], severity: 'high', description: 'MD5 is cryptographically broken' },
-      { name: 'SHA1', type: 'hash', quantumSafe: false, patterns: ['sha1', 'SHA-1'], severity: 'high', description: 'SHA-1 is deprecated' },
-      { name: 'SHA256', type: 'hash', quantumSafe: 'partial', patterns: ['sha256', 'SHA-256'], severity: 'low', description: 'SHA-256 is secure' },
-      { name: 'AES', type: 'symmetric', quantumSafe: 'partial', patterns: ['AES', 'aes'], severity: 'low', description: 'AES encryption' },
-      { name: 'RSA', type: 'asymmetric', quantumSafe: false, patterns: ['RSA', 'rsa'], severity: 'high', description: 'RSA is not quantum-safe' },
-      { name: 'ECDSA', type: 'asymmetric', quantumSafe: false, patterns: ['ECDSA', 'ecdsa'], severity: 'high', description: 'ECDSA is vulnerable to quantum' }
-    ]
-  };
 }
 
 /* ----------------------- Risk assignment ----------------------- */
@@ -133,7 +75,7 @@ export function assignRisk(
   return { severity, score, explanation };
 }
 
-/* ----------------------- Small utilities ----------------------- */
+/* ----------------------- Utilities ----------------------- */
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -142,69 +84,56 @@ export function escapeHtml(s: any): string {
   if (s === undefined || s === null) return '';
   return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as any)[m]);
 }
-// PART 2 of 5 — scanFile and scanFolder
 
-/* ----------------------- scanFile (line-by-line regex search) ----------------------- */
+/* ----------------------- scanFile using improved detector ----------------------- */
 export async function scanFile(filePath: string): Promise<CryptoAsset[]> {
-  const content = await fs.readFile(filePath, 'utf8').catch(() => '');
-  if (!content) return [];
-
-  const rules = loadCryptoRules();
-  const allRules: DetectionRule[] = [];
-  for (const k in rules) {
-    if (Array.isArray(rules[k])) allRules.push(...rules[k]);
-  }
-
-  const results: CryptoAsset[] = [];
-  const lines = content.split(/\r?\n/);
-  const seen = new Set<string>();
-
-  for (const rule of allRules) {
-    const patterns = rule.patterns && rule.patterns.length ? rule.patterns : [rule.name];
-    for (const pattern of patterns) {
-      const regex = new RegExp(`\\b${escapeRegex(pattern)}\\b`, 'gi');
-
-      lines.forEach((line, idx) => {
-        if (regex.test(line)) {
-          const lineNumber = idx + 1;
-          const key = `${rule.name}::${filePath}::${lineNumber}`;
-          if (seen.has(key)) return;
-          seen.add(key);
-
-          const risk = assignRisk(rule.quantumSafe, rule.type || rule.primitive, rule.name);
-
-          results.push({
-            name: rule.name,
-            type: rule.type || rule.primitive || 'unknown',
-            primitive: rule.primitive || rule.type || 'unknown',
-            assetType: 'algorithm',
-            description: rule.description || '',
-            quantumSafe: rule.quantumSafe ?? 'unknown',
-            severity: (risk.severity as any) || 'unknown',
-            score: risk.score,
-            riskScore: risk.score,
-            reason: risk.explanation,
-            source: filePath,
-            line: lineNumber,
-            occurrences: 1,
-            id: `scan:${rule.name.toLowerCase()}-${path.basename(filePath)}-${lineNumber}`,
-            detectionContexts: [{
-              filePath,
-              lineNumbers: [lineNumber],
-              snippet: line.trim().substring(0, 300)
-            }]
-          });
-        }
-      });
+  try {
+    console.log(`[scanFile] Scanning: ${path.basename(filePath)}`);
+    
+    // Check if file should be skipped
+    const ext = path.extname(filePath).toLowerCase();
+    const filename = path.basename(filePath).toLowerCase();
+    
+    const excludedExts = ['.json', '.xml', '.md', '.txt', '.pdf', '.png', '.jpg', '.gif', '.svg', '.zip', '.tar', '.gz', '.lock', '.log', '.min.js', '.map'];
+    const excludedPatterns = ['cbom', 'package-lock', 'yarn.lock', '.min.', 'bundle', 'vendor'];
+    
+    if (excludedExts.includes(ext)) {
+      console.log(`[scanFile] Skipping (excluded extension): ${filename}`);
+      return [];
     }
+    
+    if (excludedPatterns.some(p => filename.includes(p))) {
+      console.log(`[scanFile] Skipping (excluded pattern): ${filename}`);
+      return [];
+    }
+    
+    const content = await fs.readFile(filePath, 'utf8');
+    
+    if (!content || content.trim().length === 0) {
+      console.log(`[scanFile] Skipping (empty file): ${filename}`);
+      return [];
+    }
+    
+    // Use improved regex detector
+    const results = regexDetector.scan(content, filePath);
+    
+    if (results.length > 0) {
+      console.log(`[scanFile] ✓ Found ${results.length} detection(s) in ${filename}`);
+    }
+    
+    return results;
+  } catch (err) {
+    console.error(`[scanFile] Error scanning ${filePath}:`, err);
+    return [];
   }
-
-  return results;
 }
 
 /* ----------------------- scanFolder (recursive) ----------------------- */
 export async function scanFolder(root: string): Promise<CryptoAsset[]> {
+  console.log(`[scanFolder] Starting scan of: ${root}`);
+  
   const allAssets: CryptoAsset[] = [];
+  const assetMap = new Map<string, CryptoAsset>();
 
   function getAllFiles(dir: string): string[] {
     let entries: fsSync.Dirent[];
@@ -218,8 +147,11 @@ export async function scanFolder(root: string): Promise<CryptoAsset[]> {
     for (const entry of entries) {
       const full = path.join(dir, entry.name);
 
-      // skip common heavy folders
-      if (full.includes('node_modules') || full.includes('.git') || full.includes('dist') || full.includes('build')) continue;
+      // Skip common heavy folders
+      const skipDirs = ['node_modules', '.git', 'dist', 'build', 'out', 'target', 'vendor', '__pycache__', 'venv', '.venv'];
+      if (skipDirs.some(d => full.includes(path.sep + d + path.sep) || full.endsWith(path.sep + d))) {
+        continue;
+      }
 
       if (entry.isDirectory()) {
         files.push(...getAllFiles(full));
@@ -231,21 +163,52 @@ export async function scanFolder(root: string): Promise<CryptoAsset[]> {
   }
 
   const allFiles = getAllFiles(root);
-  const codeFiles = allFiles.filter(f => /\.(js|ts|py|java|cpp|c|h|go|rs)$/i.test(f));
+  
+  // Filter to source code files
+  const codeExts = ['.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.h', '.go', '.rs', '.cs', '.php', '.rb', '.swift'];
+  const codeFiles = allFiles.filter(f => {
+    const ext = path.extname(f).toLowerCase();
+    return codeExts.includes(ext);
+  });
+
+  console.log(`[scanFolder] Found ${codeFiles.length} source files to scan`);
 
   for (const f of codeFiles) {
     try {
       const assets = await scanFile(f);
-      if (assets.length) allAssets.push(...assets);
-    } catch {
-      // ignore single-file errors
+      
+      // Deduplicate by creating unique keys
+      for (const asset of assets) {
+        const key = `${asset.name}:${asset.source}:${asset.line || 0}`;
+        
+        if (assetMap.has(key)) {
+          // Merge occurrences
+          const existing = assetMap.get(key)!;
+          existing.occurrences = (existing.occurrences || 1) + 1;
+          if (asset.detectionContexts) {
+            existing.detectionContexts = existing.detectionContexts || [];
+            existing.detectionContexts.push(...asset.detectionContexts);
+          }
+        } else {
+          assetMap.set(key, asset);
+        }
+      }
+    } catch (err) {
+      console.warn(`[scanFolder] Error scanning ${f}:`, err);
     }
   }
 
-  return allAssets;
+  const deduplicated = Array.from(assetMap.values());
+  
+  console.log(`[scanFolder] ✅ Scan complete`);
+  console.log(`[scanFolder] 📊 Files scanned: ${codeFiles.length}`);
+  console.log(`[scanFolder] 🔍 Unique detections: ${deduplicated.length}`);
+  console.log(`[scanFolder] 📈 Total occurrences: ${deduplicated.reduce((sum, a) => sum + (a.occurrences || 1), 0)}`);
+  
+  return deduplicated;
 }
-// PART 3 of 5 — scanGithubRepo (long-path safe GitHub scanner)
 
+/* ----------------------- scanGithubRepo (long-path safe) ----------------------- */
 export async function scanGithubRepo(
   repoUrl: string,
   outputDir: string
@@ -256,121 +219,116 @@ export async function scanGithubRepo(
   cbomPath: string;
   dashboardPath: string;
 }> {
-  console.log(`📥 Cloning repository: ${repoUrl}`);
+  console.log(`\n📥 [GitHub] Cloning repository: ${repoUrl}`);
 
-  // Pick short Windows directory to avoid MAX_PATH issues.
-  const repoName = repoUrl.split('/').pop()?.replace('.git', '') ?? 'repo';
+  // Normalize URL
+  let normalizedUrl = repoUrl.trim()
+    .replace(/\/blob\/.*/, '')
+    .replace(/\.git.*/, '')
+    .replace(/\/$/, '');
+  
+  if (!normalizedUrl.startsWith('https://')) {
+    normalizedUrl = 'https://' + normalizedUrl;
+  }
+  if (!normalizedUrl.endsWith('.git')) {
+    normalizedUrl += '.git';
+  }
+
+  const repoName = normalizedUrl.split('/').pop()?.replace('.git', '') ?? 'repo';
+  
+  // Pick short directory for Windows long-path issues
   let targetDir: string;
-
   if (process.platform === 'win32' && fsSync.existsSync('C:\\r')) {
     targetDir = path.join('C:\\r', `cd-${Date.now()}`);
   } else if (process.platform === 'win32') {
-    // fallback if C:\r doesn't exist
     targetDir = path.join('C:\\', `cd-${Date.now()}`);
   } else {
-    // Linux/macOS
     targetDir = path.join(os.tmpdir(), `crypto-detector-${repoName}-${Date.now()}`);
   }
 
   fsSync.mkdirSync(targetDir, { recursive: true });
+  console.log(`📁 [GitHub] Target directory: ${targetDir}`);
 
   const git = simpleGit();
 
-  /* ----------------------- Attempt shallow clone with long-path support ----------------------- */
+  // Try shallow clone first
   try {
-    await git.clone(repoUrl, targetDir, [
+    console.log(`⬇️  [GitHub] Attempting shallow clone...`);
+    await git.clone(normalizedUrl, targetDir, [
       '--config', 'core.longpaths=true',
       '--depth', '1'
     ]);
-
-    console.log(`✅ Shallow clone succeeded.`);
+    console.log(`✅ [GitHub] Shallow clone succeeded`);
   } catch (err) {
-    console.warn('⚠️ Shallow clone failed — retrying full clone with long-path support...');
-
+    console.warn('⚠️  [GitHub] Shallow clone failed, trying full clone...');
     try {
-      await git.clone(repoUrl, targetDir, [
+      await git.clone(normalizedUrl, targetDir, [
         '--config', 'core.longpaths=true'
       ]);
-      console.log('✅ Full clone succeeded.');
+      console.log('✅ [GitHub] Full clone succeeded');
     } catch (err2) {
-      console.error('❌ Failed to clone repository even with long-path support.');
-      throw err2;
+      console.error('❌ [GitHub] Clone failed:', err2);
+      throw new Error(`Failed to clone repository: ${err2}`);
     }
   }
 
-  console.log(`📁 Repository cloned into: ${targetDir}`);
+  // Scan the cloned repository
+  console.log(`\n🔍 [GitHub] Scanning cloned repository...`);
+  const allAssets = await scanFolder(targetDir);
 
-  /* ----------------------- Walk directory for files ----------------------- */
-  const allFiles: string[] = [];
-
-  function walk(dir: string): void {
-    let entries: fsSync.Dirent[];
+  // Count code files
+  function countCodeFiles(dir: string): number {
+    let count = 0;
     try {
-      entries = fsSync.readdirSync(dir, { withFileTypes: true });
-    } catch {
-      return;
-    }
-
-    for (const entry of entries) {
-      const full = path.join(dir, entry.name);
-
-      if (full.includes('node_modules') || full.includes('.git') || full.includes('dist') || full.includes('build')) {
-        continue;
+      const entries = fsSync.readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const full = path.join(dir, entry.name);
+        if (full.includes('node_modules') || full.includes('.git')) continue;
+        
+        if (entry.isDirectory()) {
+          count += countCodeFiles(full);
+        } else if (entry.isFile()) {
+          const ext = path.extname(full).toLowerCase();
+          if (['.js', '.ts', '.py', '.java', '.cpp', '.c', '.go', '.rs'].includes(ext)) {
+            count++;
+          }
+        }
       }
-
-      if (entry.isDirectory()) {
-        walk(full);
-      } else if (entry.isFile()) {
-        allFiles.push(full);
-      }
-    }
+    } catch {}
+    return count;
   }
 
-  walk(targetDir);
+  const codeFileCount = countCodeFiles(targetDir);
 
-  const codeFiles = allFiles.filter(f =>
-    /\.(js|ts|py|java|cpp|c|h|go|rs)$/i.test(f)
-  );
-
-  console.log(`🔍 Found ${codeFiles.length} code files.`);
-
-  /* ----------------------- Scan all supported files ----------------------- */
-  const allAssets: CryptoAsset[] = [];
-
-  for (const f of codeFiles) {
-    try {
-      const assets = await scanFile(f);
-      if (assets.length > 0) {
-        console.log(`📌 ${path.relative(targetDir, f)} → ${assets.length} detections`);
-      }
-      allAssets.push(...assets);
-    } catch (err) {
-      console.error(`❌ Error scanning ${f}`);
-    }
-  }
-
-  /* ----------------------- Generate output files ----------------------- */
+  // Generate output files
   fsSync.mkdirSync(outputDir, { recursive: true });
 
   const cbomPath = path.join(outputDir, `${repoName}-cbom.json`);
   await generateCBOM(allAssets, cbomPath);
+  console.log(`📦 [GitHub] CBOM saved: ${cbomPath}`);
 
   const dashboardPath = path.join(outputDir, `${repoName}-dashboard.html`);
-  await generateDashboardHtml(allAssets, dashboardPath);
+  generateDashboardHtml(allAssets, dashboardPath);
+  console.log(`📊 [GitHub] Dashboard saved: ${dashboardPath}`);
 
-  console.log(`📦 CBOM saved: ${cbomPath}`);
-  console.log(`📊 Dashboard saved: ${dashboardPath}`);
+  // Cleanup temp directory (optional - comment out for debugging)
+  try {
+    setTimeout(() => {
+      fsSync.rmSync(targetDir, { recursive: true, force: true });
+      console.log(`🧹 [GitHub] Cleaned up temp directory`);
+    }, 5000);
+  } catch {}
 
   return {
     repoDir: targetDir,
-    codeFiles: codeFiles.length,
+    codeFiles: codeFileCount,
     detections: allAssets.length,
     cbomPath,
     dashboardPath
   };
 }
-// PART 4 of 5 — generateCBOM (CycloneDX JSON output)
 
+/* ----------------------- generateCBOM ----------------------- */
 export async function generateCBOM(assets: CryptoAsset[], outputPath: string): Promise<void> {
   const components = assets.map((asset, index) => ({
     type: "cryptographic-asset",
@@ -406,7 +364,7 @@ export async function generateCBOM(assets: CryptoAsset[], outputPath: string): P
         {
           vendor: "Syed Shail",
           name: "Crypto Detector Engine",
-          version: "2.0.0"
+          version: "2.1.1"
         }
       ]
     },
@@ -415,14 +373,16 @@ export async function generateCBOM(assets: CryptoAsset[], outputPath: string): P
       totalDetected: assets.length,
       highRisk: assets.filter(a => a.severity === "high").length,
       mediumRisk: assets.filter(a => a.severity === "medium").length,
-      lowRisk: assets.filter(a => a.severity === "low").length
+      lowRisk: assets.filter(a => a.severity === "low").length,
+      quantumSafe: assets.filter(a => a.quantumSafe === true).length,
+      quantumVulnerable: assets.filter(a => a.quantumSafe === false).length
     }
   };
 
   await fs.writeFile(outputPath, JSON.stringify(cbom, null, 2), "utf8");
 }
-// PART 5 of 5 — generateDashboardHtml (Full Beautiful Dashboard using Chart.js)
 
+/* ----------------------- generateDashboardHtml ----------------------- */
 export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string): void {
   const total = assets.length;
   const high = assets.filter(a => String(a.severity).toLowerCase() === 'high').length;
@@ -439,6 +399,7 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
       <td class="severity-${escapeHtml(String(a.severity))}">${escapeHtml(String(a.severity || 'unknown')).toUpperCase()}</td>
       <td>${escapeHtml(String(a.riskScore ?? a.score ?? 0))}</td>
       <td>${escapeHtml(String(a.occurrences ?? 1))}</td>
+      <td title="${escapeHtml(a.source || '')}">${escapeHtml(path.basename(a.source || ''))}</td>
     </tr>`).join('\n');
 
   const html = `<!DOCTYPE html>
@@ -449,104 +410,95 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    :root { --bg:#f4f6fb; --card:#ffffff; --muted:#6b7280; }
+    :root { --bg:#0d1117; --card:#161b22; --text:#e6edf3; --border:#30363d; --accent:#58a6ff; }
     * { box-sizing: border-box; }
-    body { margin:0; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); padding:24px; }
-    .container { max-width:1200px; margin:0 auto; background:var(--card); border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(2,6,23,0.08); }
-    h1 { margin:0 0 12px 0; font-size:22px; }
-    .stats { display:flex; gap:12px; margin:16px 0 24px 0; }
-    .stat { flex:1; padding:14px; border-radius:10px; color:white; background:linear-gradient(90deg,#667eea,#764ba2); text-align:center; }
-    .stat .num { font-size:24px; font-weight:700; }
-    .charts { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:20px; }
-    .card { background:#fff; padding:14px; border-radius:10px; box-shadow: 0 6px 18px rgba(2,6,23,0.04); }
-    table { width:100%; border-collapse:collapse; margin-top:12px; }
-    th, td { padding:10px 8px; text-align:left; border-bottom:1px solid #eef2f7; font-size:13px; }
-    th { background:#fbfdff; font-weight:600; color:#111827; }
-    .severity-high { color:#d32f2f; font-weight:700; }
-    .severity-medium { color:#f57c00; font-weight:700; }
-    .severity-low { color:#388e3c; font-weight:700; }
-    @media (max-width:900px) { .charts { grid-template-columns: 1fr; } .stats { flex-direction:column; } }
+    body { margin:0; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); padding:24px; }
+    .container { max-width:1400px; margin:0 auto; }
+    h1 { color:var(--accent); margin-bottom:8px; }
+    .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin:24px 0; }
+    .stat { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:20px; text-align:center; }
+    .stat .num { font-size:36px; font-weight:700; color:var(--accent); }
+    .stat .label { color:#8b949e; margin-top:8px; font-size:14px; }
+    .charts { display:grid; grid-template-columns:repeat(auto-fit, minmax(400px, 1fr)); gap:20px; margin-bottom:24px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:20px; }
+    canvas { max-height:280px !important; }
+    table { width:100%; border-collapse:collapse; margin-top:16px; background:var(--card); border-radius:8px; overflow:hidden; }
+    th, td { padding:12px 16px; text-align:left; border-bottom:1px solid var(--border); }
+    th { background:#21262d; color:var(--accent); font-weight:600; }
+    tr:hover { background:#1f2937; }
+    .severity-high { color:#f85149; font-weight:700; }
+    .severity-medium { color:#f0ad4e; font-weight:700; }
+    .severity-low { color:#3fb950; font-weight:700; }
+    @media (max-width:900px) { .charts, .stats { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🔐 Crypto Analysis Dashboard</h1>
+    <p style="color:#8b949e; margin-bottom:24px;">Cryptographic Bill of Materials (CBOM) Report</p>
 
-    <div class="stats" role="region" aria-label="summary stats">
+    <div class="stats">
       <div class="stat"><div class="num">${total}</div><div class="label">Total Assets</div></div>
       <div class="stat"><div class="num">${high}</div><div class="label">High Risk</div></div>
       <div class="stat"><div class="num">${medium}</div><div class="label">Medium Risk</div></div>
       <div class="stat"><div class="num">${low}</div><div class="label">Low Risk</div></div>
+      <div class="stat"><div class="num">${qSafe}</div><div class="label">Quantum-Safe</div></div>
+      <div class="stat"><div class="num">${qVuln}</div><div class="label">Vulnerable</div></div>
     </div>
 
-    <div class="charts" role="region" aria-label="charts">
+    <div class="charts">
       <div class="card">
-        <h3 style="margin:0 0 10px 0;">Risk Distribution</h3>
-        <canvas id="riskChart" width="400" height="260" aria-label="Risk distribution chart"></canvas>
+        <h3 style="margin:0 0 16px 0;">Risk Distribution</h3>
+        <canvas id="riskChart"></canvas>
       </div>
       <div class="card">
-        <h3 style="margin:0 0 10px 0;">Quantum Readiness</h3>
-        <canvas id="quantumChart" width="400" height="260" aria-label="Quantum readiness chart"></canvas>
+        <h3 style="margin:0 0 16px 0;">Quantum Readiness</h3>
+        <canvas id="quantumChart"></canvas>
       </div>
     </div>
 
-    <div class="card" role="region" aria-label="detected algorithms">
-      <h3 style="margin:0 0 10px 0;">Detected Algorithms</h3>
-      <div style="overflow:auto; max-height:480px;">
-        <table>
-          <thead>
-            <tr><th>Algorithm</th><th>Type</th><th>Quantum-Safe</th><th>Severity</th><th>Risk Score</th><th>Occurrences</th></tr>
-          </thead>
-          <tbody>
-            ${rowsHtml}
-          </tbody>
-        </table>
-      </div>
+    <div class="card">
+      <h3 style="margin:0 0 16px 0;">Detected Algorithms</h3>
+      <table>
+        <thead>
+          <tr><th>Algorithm</th><th>Type</th><th>Quantum-Safe</th><th>Severity</th><th>Risk Score</th><th>Occurrences</th><th>File</th></tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
     </div>
-
   </div>
 
   <script>
-    (function(){
-      const riskCtx = document.getElementById('riskChart').getContext('2d');
-      new Chart(riskCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['High','Medium','Low'],
-          datasets: [{
-            data: [${high}, ${medium}, ${low}],
-            backgroundColor: ['#d32f2f','#f57c00','#388e3c'],
-            hoverOffset: 8
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'bottom' }
-          }
-        }
-      });
+    new Chart(document.getElementById('riskChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['High','Medium','Low'],
+        datasets: [{
+          data: [${high}, ${medium}, ${low}],
+          backgroundColor: ['#f85149','#f0ad4e','#3fb950']
+        }]
+      },
+      options: { plugins: { legend: { labels: { color: '#e6edf3' } } } }
+    });
 
-      const qCtx = document.getElementById('quantumChart').getContext('2d');
-      new Chart(qCtx, {
-        type: 'bar',
-        data: {
-          labels: ['Quantum-Safe','Quantum-Vulnerable'],
-          datasets: [{
-            label: 'Count',
-            data: [${qSafe}, ${qVuln}],
-            backgroundColor: ['#388e3c','#d32f2f']
-          }]
+    new Chart(document.getElementById('quantumChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Quantum-Safe','Vulnerable'],
+        datasets: [{
+          label: 'Count',
+          data: [${qSafe}, ${qVuln}],
+          backgroundColor: ['#3fb950','#f85149']
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true, ticks: { color: '#e6edf3' } },
+          x: { ticks: { color: '#e6edf3' } }
         },
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true, ticks: { precision: 0 } }
-          },
-          plugins: { legend: { display: false } }
-        }
-      });
-    })();
+        plugins: { legend: { display: false } }
+      }
+    });
   </script>
 </body>
 </html>`;
@@ -554,9 +506,11 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
   try {
     fsSync.writeFileSync(outputPath, html, 'utf8');
   } catch (err) {
-    // If write fails, try writing to tmp and return that path
+    console.error('[generateDashboardHtml] Failed to write dashboard:', err);
     const fallback = path.join(os.tmpdir(), `crypto-detector-dashboard-${Date.now()}.html`);
-    try { fsSync.writeFileSync(fallback, html, 'utf8'); } catch { /* swallow */ }
-    // Not throwing — caller can log fallback location if needed
+    try { 
+      fsSync.writeFileSync(fallback, html, 'utf8'); 
+      console.log(`[generateDashboardHtml] Wrote to fallback location: ${fallback}`);
+    } catch {}
   }
 }

@@ -313,7 +313,6 @@ export function getIBMStyleDashboard(assets: CryptoAsset[]): string {
 <body>
   <div class="header">
     <h1>
-      <span class="ibm-logo">IBM</span>
       Cryptographic Bill of Materials (CBOM)
     </h1>
     <div class="header-actions">

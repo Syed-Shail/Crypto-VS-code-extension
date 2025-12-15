@@ -1,4 +1,4 @@
-// src/parser/regex-detector.ts
+// src/parser/regex-detector.ts - IMPROVED with context validation
 import { CryptoAsset, Severity } from "./types";
 import { assignRisk } from "./risk-utils";
 import * as fs from "fs";
@@ -25,18 +25,15 @@ export class RegexDetector {
     try {
       const rulesData = JSON.parse(fs.readFileSync(rulesPath, "utf8"));
       
-      // Flatten all language-specific rules into a single array
       this.rules = [];
       for (const langKey in rulesData) {
         const langRules = rulesData[langKey];
         if (Array.isArray(langRules)) {
           for (const rule of langRules) {
-            // Convert api field to patterns array
             const patterns = rule.patterns || [];
             if (rule.api && !patterns.includes(rule.api)) {
               patterns.push(rule.api);
             }
-            // Also add the name as a pattern
             if (rule.name && !patterns.includes(rule.name)) {
               patterns.push(rule.name);
             }
@@ -48,10 +45,186 @@ export class RegexDetector {
           }
         }
       }
+      console.log(`[RegexDetector] Loaded ${this.rules.length} detection rules`);
     } catch (err) {
       console.error('[RegexDetector] Failed to load rules:', err);
       this.rules = [];
     }
+  }
+
+  /**
+   * Check if a line is likely a false positive
+   */
+  private isLikelyFalsePositive(line: string, pattern: string): boolean {
+    const trimmed = line.trim();
+    
+    // Skip comments
+    if (this.isComment(trimmed)) {
+      return true;
+    }
+
+    // Skip documentation strings
+    if (this.isDocumentation(trimmed)) {
+      return true;
+    }
+
+    // Skip URLs and file paths
+    if (this.isUrlOrPath(trimmed)) {
+      return true;
+    }
+
+    // Skip import/require statements (unless it's a crypto library)
+    if (this.isNonCryptoImport(trimmed, pattern)) {
+      return true;
+    }
+
+    // Skip if pattern appears only in a string literal (not as function call)
+    if (this.isOnlyInStringLiteral(trimmed, pattern)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private isComment(line: string): boolean {
+    // Single-line comments
+    if (/^\s*(\/\/|#|;|--|'|<!--)/.test(line)) {
+      return true;
+    }
+    
+    // Multi-line comment indicators
+    if (/^\s*\*/.test(line) || line.includes('/*') || line.includes('*/')) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  private isDocumentation(line: string): boolean {
+    // Python docstrings
+    if (/^\s*("""|\'\'\')/.test(line)) {
+      return true;
+    }
+    
+    // JSDoc
+    if (/^\s*\*\s*@(param|return|description|example)/.test(line)) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  private isUrlOrPath(line: string): boolean {
+    // URLs
+    if (/https?:\/\//.test(line) || /www\./.test(line)) {
+      return true;
+    }
+    
+    // File paths
+    if (/[\\\/].*\.(json|txt|md|log|xml)/.test(line)) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  private isNonCryptoImport(line: string, pattern: string): boolean {
+    // Python imports (but allow crypto library imports)
+    if (/^\s*(import|from)\s+/.test(line)) {
+      // Allow: from cryptography import ..., import hashlib, etc.
+      if (/\b(crypto|hash|cipher|hmac|ecdsa)\b/i.test(line)) {
+        return false;
+      }
+      return true;
+    }
+    
+    // JavaScript imports (but allow crypto imports)
+    if (/^\s*(import|require|export)\s+/.test(line)) {
+      if (/\b(crypto|hash|cipher)\b/i.test(line)) {
+        return false;
+      }
+      return true;
+    }
+    
+    return false;
+  }
+
+  private isOnlyInStringLiteral(line: string, pattern: string): boolean {
+    // Remove all string literals and check if pattern still exists
+    const withoutStrings = line
+      .replace(/"[^"]*"/g, '""')
+      .replace(/'[^']*'/g, "''")
+      .replace(/`[^`]*`/g, '``');
+    
+    const regex = new RegExp(`\\b${this.escapeRegex(pattern)}\\b`, 'i');
+    
+    // If pattern doesn't exist after removing strings, it was only in strings
+    if (!regex.test(withoutStrings)) {
+      // But allow if it looks like an API call in the original
+      if (this.looksLikeApiCall(line, pattern)) {
+        return false;
+      }
+      return true;
+    }
+    
+    return false;
+  }
+
+  private looksLikeApiCall(line: string, pattern: string): boolean {
+    const regex = new RegExp(`\\b${this.escapeRegex(pattern)}\\s*[\\(\\.]`, 'i');
+    return regex.test(line);
+  }
+
+  /**
+   * Check if line contains actual crypto usage (API call, assignment, etc.)
+   */
+  private hasValidCryptoContext(line: string, pattern: string): boolean {
+    const regex = new RegExp(`\\b${this.escapeRegex(pattern)}\\b`, 'i');
+    
+    // Must match the pattern
+    if (!regex.test(line)) {
+      return false;
+    }
+
+    // Valid contexts:
+    // 1. Function/method call: pattern(, pattern., .pattern(
+    if (/\w+\s*\(/.test(line) || /\.\s*\w+\s*\(/.test(line)) {
+      return true;
+    }
+
+    // 2. Assignment: = pattern, : pattern
+    if (new RegExp(`[=:]\\s*.*${this.escapeRegex(pattern)}`, 'i').test(line)) {
+      return true;
+    }
+
+    // 3. Method chaining: .pattern
+    if (new RegExp(`\\.\\s*${this.escapeRegex(pattern)}`, 'i').test(line)) {
+      return true;
+    }
+
+    // 4. Instantiation: new pattern
+    if (new RegExp(`new\\s+${this.escapeRegex(pattern)}`, 'i').test(line)) {
+      return true;
+    }
+
+    // 5. String that looks like algorithm name in crypto API
+    if (/['"](md5|sha1|sha256|sha512|aes|rsa|des|3des|ecdsa)['"]/i.test(line)) {
+      // But must have crypto context nearby
+      if (/\b(hash|digest|cipher|encrypt|decrypt|sign|verify|key|algorithm)\b/i.test(line)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Create a strong detection key to avoid duplicates
+   */
+  private createDetectionKey(rule: string, filename: string, lineNumber: number, snippet: string): string {
+    // Use first 50 chars of snippet to differentiate multiple uses on same line
+    const snippetHash = snippet.trim().substring(0, 50);
+    return `${rule}::${path.basename(filename)}::${lineNumber}::${snippetHash}`;
   }
 
   scan(content: string, filename: string): CryptoAsset[] {
@@ -59,66 +232,92 @@ export class RegexDetector {
     const lines = content.split("\n");
     const seenDetections = new Set<string>();
 
+    console.log(`[RegexDetector] Scanning ${path.basename(filename)} (${lines.length} lines)`);
+
     for (const rule of this.rules) {
       const patterns = rule.patterns || [rule.name];
       
       for (const pattern of patterns) {
-        // Escape special regex characters if the pattern isn't already a regex
         let regex: RegExp;
         try {
+          // Use word boundaries for cleaner matching
           regex = new RegExp(`\\b${this.escapeRegex(pattern)}\\b`, "gi");
         } catch (err) {
           console.warn(`[RegexDetector] Invalid pattern: ${pattern}`);
           continue;
         }
 
+        let matchCount = 0;
+
         lines.forEach((line, index) => {
-          const matches = line.match(regex);
-          if (matches) {
-            const lineNumber = index + 1;
-            const snippet = line.trim();
-            
-            // Create unique key to avoid duplicates
-            const detectionKey = `${rule.name}-${filename}-${lineNumber}`;
-            if (seenDetections.has(detectionKey)) {
-              return;
-            }
-            seenDetections.add(detectionKey);
-
-            const risk = assignRisk(
-              rule.quantumSafe, 
-              rule.type ?? rule.primitive, 
-              rule.name
-            );
-
-            results.push({
-              name: rule.name,
-              type: rule.type ?? rule.primitive ?? 'unknown',
-              primitive: rule.primitive ?? rule.type ?? 'unknown',
-              assetType: "algorithm",
-              description: rule.description ?? "",
-              quantumSafe: rule.quantumSafe ?? 'unknown',
-              severity: risk.severity as Severity,
-              score: risk.score,
-              riskScore: risk.score,
-              reason: risk.explanation,
-              source: filename,
-              line: lineNumber,
-              occurrences: 1,
-              id: `regex:${(rule.name || 'unknown').toLowerCase()}-${lineNumber}`,
-              detectionContexts: [
-                {
-                  filePath: filename,
-                  lineNumbers: [lineNumber],
-                  snippet
-                }
-              ]
-            });
+          if (!regex.test(line)) {
+            return;
           }
+
+          // Reset regex lastIndex for multiple tests
+          regex.lastIndex = 0;
+
+          const lineNumber = index + 1;
+          const snippet = line.trim();
+
+          // Skip false positives
+          if (this.isLikelyFalsePositive(line, pattern)) {
+            return;
+          }
+
+          // Require valid crypto context
+          if (!this.hasValidCryptoContext(line, pattern)) {
+            return;
+          }
+
+          // Create strong detection key
+          const detectionKey = this.createDetectionKey(rule.name, filename, lineNumber, snippet);
+          
+          if (seenDetections.has(detectionKey)) {
+            return;
+          }
+          seenDetections.add(detectionKey);
+
+          matchCount++;
+
+          const risk = assignRisk(
+            rule.quantumSafe, 
+            rule.type ?? rule.primitive, 
+            rule.name
+          );
+
+          results.push({
+            name: rule.name,
+            type: rule.type ?? rule.primitive ?? 'unknown',
+            primitive: rule.primitive ?? rule.type ?? 'unknown',
+            assetType: "algorithm",
+            description: rule.description ?? "",
+            quantumSafe: rule.quantumSafe ?? 'unknown',
+            severity: risk.severity as Severity,
+            score: risk.score,
+            riskScore: risk.score,
+            reason: risk.explanation,
+            source: filename,
+            line: lineNumber,
+            occurrences: 1,
+            id: `regex:${rule.name.toLowerCase()}-${path.basename(filename)}-${lineNumber}`,
+            detectionContexts: [
+              {
+                filePath: filename,
+                lineNumbers: [lineNumber],
+                snippet: snippet.substring(0, 300)
+              }
+            ]
+          });
         });
+
+        if (matchCount > 0) {
+          console.log(`  ✓ ${rule.name}: ${matchCount} valid detection(s)`);
+        }
       }
     }
 
+    console.log(`[RegexDetector] Found ${results.length} valid detections in ${path.basename(filename)}`);
     return results;
   }
 
@@ -137,4 +336,4 @@ export class RegexDetector {
   }
 }
 
-export const regexDetector = new RegexDetector(); 
+export const regexDetector = new RegexDetector();
