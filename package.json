@@ -2,7 +2,7 @@
   "name": "crypto-detector",
   "displayName": "Crypto Algorithm Detector",
   "description": "Detects cryptographic algorithms in source code, scans GitHub repos, exports CBOMs, and generates dashboards.",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "publisher": "syedshail",
   "repository": {
     "type": "git",
