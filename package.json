@@ -126,13 +126,18 @@
 
  
  "scripts": {
-  "vscode:prepublish": "npm run compile",
-  "compile": "tsc -p ./ && npm run postcompile",
-  "postcompile": "node scripts/fix-shebang.js",
-  "watch": "tsc -watch -p ./",
-  "package": "vsce package",
-  "publish": "vsce publish"
-},
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./ && npm run copy-resources",
+    "copy-resources": "node scripts/copy-resources.js",
+    "postcompile": "node scripts/fix-shebang.js",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "vscode-test",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "download-grammars": "node scripts/copy-wasms.js",
+    "setup": "npm run download-grammars && npm run compile"
+  },
 
 
  
