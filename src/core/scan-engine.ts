@@ -383,7 +383,24 @@ export async function generateCBOM(assets: CryptoAsset[], outputPath: string): P
 }
 
 /* ----------------------- generateDashboardHtml ----------------------- */
+// src/core/scan-engine.ts - Enhanced generateDashboardHtml with file grouping
+
 export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string): void {
+  // Group assets by file
+  const byFile: Record<string, CryptoAsset[]> = {};
+  
+  for (const asset of assets) {
+    const contexts = asset.detectionContexts || [];
+    for (const ctx of contexts) {
+      const file = ctx.filePath || asset.source || 'Unknown';
+      if (!byFile[file]) {
+        byFile[file] = [];
+      }
+      byFile[file].push(asset);
+    }
+  }
+
+  const files = Object.keys(byFile).sort();
   const total = assets.length;
   const high = assets.filter(a => String(a.severity).toLowerCase() === 'high').length;
   const medium = assets.filter(a => String(a.severity).toLowerCase() === 'medium').length;
@@ -391,16 +408,68 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
   const qSafe = assets.filter(a => a.quantumSafe === true).length;
   const qVuln = assets.filter(a => a.quantumSafe === false).length;
 
-  const rowsHtml = assets.map(a => `
-    <tr>
-      <td><strong>${escapeHtml(a.name)}</strong></td>
-      <td>${escapeHtml(a.primitive || a.type || 'unknown')}</td>
-      <td>${escapeHtml(String(a.quantumSafe))}</td>
-      <td class="severity-${escapeHtml(String(a.severity))}">${escapeHtml(String(a.severity || 'unknown')).toUpperCase()}</td>
-      <td>${escapeHtml(String(a.riskScore ?? a.score ?? 0))}</td>
-      <td>${escapeHtml(String(a.occurrences ?? 1))}</td>
-      <td title="${escapeHtml(a.source || '')}">${escapeHtml(path.basename(a.source || ''))}</td>
-    </tr>`).join('\n');
+  // Build file sections HTML
+  let fileSectionsHtml = '';
+  for (const file of files) {
+    const filename = path.basename(file);
+    const fileAssets = byFile[file];
+    
+    fileSectionsHtml += `
+      <div class="file-section">
+        <div class="file-header" onclick="toggleFile(this)">
+          <span class="file-icon">📄</span>
+          <span class="file-name">${escapeHtml(filename)}</span>
+          <span class="file-count">${fileAssets.length} detection(s)</span>
+          <span class="toggle-icon">▼</span>
+        </div>
+        <div class="file-content">
+          <div class="file-path">${escapeHtml(file)}</div>
+          <table class="file-table">
+            <thead>
+              <tr>
+                <th>Line</th>
+                <th>Algorithm</th>
+                <th>Type</th>
+                <th>Quantum-Safe</th>
+                <th>Severity</th>
+                <th>Risk Score</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    // Sort by line number
+    const sortedAssets = [...fileAssets].sort((a, b) => {
+      const lineA = a.detectionContexts?.[0]?.lineNumbers?.[0] || a.line || 0;
+      const lineB = b.detectionContexts?.[0]?.lineNumbers?.[0] || b.line || 0;
+      return lineA - lineB;
+    });
+
+    for (const asset of sortedAssets) {
+      const lineNumbers = asset.detectionContexts?.[0]?.lineNumbers || [asset.line || 0];
+      const lineStr = lineNumbers.length > 1 
+        ? `${lineNumbers[0]}-${lineNumbers[lineNumbers.length - 1]}`
+        : String(lineNumbers[0] || 0);
+
+      fileSectionsHtml += `
+        <tr class="severity-${escapeHtml(String(asset.severity || 'unknown'))}">
+          <td class="line-number">${lineStr}</td>
+          <td><strong>${escapeHtml(asset.name)}</strong></td>
+          <td>${escapeHtml(asset.primitive || asset.type || 'unknown')}</td>
+          <td><span class="quantum-badge quantum-${escapeHtml(String(asset.quantumSafe))}">${escapeHtml(String(asset.quantumSafe))}</span></td>
+          <td><span class="severity-badge">${escapeHtml(String(asset.severity || 'unknown').toUpperCase())}</span></td>
+          <td>${escapeHtml(String(asset.riskScore ?? asset.score ?? 0))}</td>
+        </tr>
+      `;
+    }
+
+    fileSectionsHtml += `
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
 
   const html = `<!DOCTYPE html>
 <html>
@@ -410,65 +479,289 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    :root { --bg:#0d1117; --card:#161b22; --text:#e6edf3; --border:#30363d; --accent:#58a6ff; }
+    :root { 
+      --bg:#0d1117; 
+      --card:#161b22; 
+      --text:#e6edf3; 
+      --border:#30363d; 
+      --accent:#58a6ff;
+      --high:#f85149;
+      --medium:#f0ad4e;
+      --low:#3fb950;
+    }
     * { box-sizing: border-box; }
-    body { margin:0; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); padding:24px; }
+    body { 
+      margin:0; 
+      font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; 
+      background:var(--bg); 
+      color:var(--text); 
+      padding:24px; 
+    }
     .container { max-width:1400px; margin:0 auto; }
-    h1 { color:var(--accent); margin-bottom:8px; }
-    .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin:24px 0; }
-    .stat { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:20px; text-align:center; }
-    .stat .num { font-size:36px; font-weight:700; color:var(--accent); }
-    .stat .label { color:#8b949e; margin-top:8px; font-size:14px; }
-    .charts { display:grid; grid-template-columns:repeat(auto-fit, minmax(400px, 1fr)); gap:20px; margin-bottom:24px; }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:20px; }
-    canvas { max-height:280px !important; }
-    table { width:100%; border-collapse:collapse; margin-top:16px; background:var(--card); border-radius:8px; overflow:hidden; }
-    th, td { padding:12px 16px; text-align:left; border-bottom:1px solid var(--border); }
-    th { background:#21262d; color:var(--accent); font-weight:600; }
-    tr:hover { background:#1f2937; }
-    .severity-high { color:#f85149; font-weight:700; }
-    .severity-medium { color:#f0ad4e; font-weight:700; }
-    .severity-low { color:#3fb950; font-weight:700; }
-    @media (max-width:900px) { .charts, .stats { grid-template-columns:1fr; } }
+    
+    h1 { 
+      color:var(--accent); 
+      margin-bottom:8px; 
+      font-size: 2rem;
+    }
+    
+    .subtitle {
+      color:#8b949e;
+      margin-bottom:24px;
+      font-size:0.9rem;
+    }
+    
+    .stats { 
+      display:grid; 
+      grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); 
+      gap:16px; 
+      margin:24px 0; 
+    }
+    
+    .stat { 
+      background:var(--card); 
+      border:1px solid var(--border); 
+      border-radius:8px; 
+      padding:20px; 
+      text-align:center; 
+    }
+    
+    .stat .num { 
+      font-size:36px; 
+      font-weight:700; 
+      color:var(--accent); 
+    }
+    
+    .stat .label { 
+      color:#8b949e; 
+      margin-top:8px; 
+      font-size:14px; 
+    }
+    
+    .stat.high .num { color:var(--high); }
+    .stat.medium .num { color:var(--medium); }
+    .stat.low .num { color:var(--low); }
+    
+    .charts { 
+      display:grid; 
+      grid-template-columns:repeat(auto-fit, minmax(400px, 1fr)); 
+      gap:20px; 
+      margin-bottom:24px; 
+    }
+    
+    .card { 
+      background:var(--card); 
+      border:1px solid var(--border); 
+      border-radius:8px; 
+      padding:20px; 
+    }
+    
+    .card h3 {
+      margin:0 0 16px 0;
+      font-size:1.1rem;
+    }
+    
+    canvas { 
+      max-height:280px !important; 
+    }
+    
+    .file-section {
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:8px;
+      margin-bottom:16px;
+      overflow:hidden;
+    }
+    
+    .file-header {
+      padding:16px 20px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      transition:background 0.2s;
+      user-select:none;
+    }
+    
+    .file-header:hover {
+      background:rgba(255,255,255,0.03);
+    }
+    
+    .file-icon {
+      font-size:1.2rem;
+    }
+    
+    .file-name {
+      font-weight:600;
+      flex:1;
+      color:var(--accent);
+    }
+    
+    .file-count {
+      color:#8b949e;
+      font-size:0.9rem;
+    }
+    
+    .toggle-icon {
+      color:#8b949e;
+      transition:transform 0.2s;
+    }
+    
+    .file-header.collapsed .toggle-icon {
+      transform:rotate(-90deg);
+    }
+    
+    .file-content {
+      max-height:2000px;
+      overflow:hidden;
+      transition:max-height 0.3s ease-out;
+    }
+    
+    .file-content.collapsed {
+      max-height:0;
+    }
+    
+    .file-path {
+      padding:8px 20px;
+      font-size:0.85rem;
+      color:#8b949e;
+      font-family:monospace;
+      background:rgba(0,0,0,0.2);
+      border-bottom:1px solid var(--border);
+    }
+    
+    .file-table {
+      width:100%;
+      border-collapse:collapse;
+    }
+    
+    .file-table thead {
+      background:#21262d;
+      position:sticky;
+      top:0;
+    }
+    
+    .file-table th {
+      padding:10px 16px;
+      text-align:left;
+      font-weight:600;
+      font-size:0.85rem;
+      color:var(--accent);
+      border-bottom:2px solid var(--border);
+    }
+    
+    .file-table td {
+      padding:10px 16px;
+      border-bottom:1px solid var(--border);
+      font-size:0.9rem;
+    }
+    
+    .file-table tr:hover {
+      background:rgba(255,255,255,0.02);
+    }
+    
+    .line-number {
+      font-family:monospace;
+      color:#8b949e;
+      font-weight:600;
+      min-width:60px;
+    }
+    
+    .severity-badge {
+      display:inline-block;
+      padding:3px 8px;
+      border-radius:4px;
+      font-size:0.75rem;
+      font-weight:600;
+      text-transform:uppercase;
+    }
+    
+    .severity-high .severity-badge {
+      background:rgba(248,81,73,0.2);
+      color:#fca5a5;
+      border:1px solid var(--high);
+    }
+    
+    .severity-medium .severity-badge {
+      background:rgba(245,158,11,0.2);
+      color:#fcd34d;
+      border:1px solid var(--medium);
+    }
+    
+    .severity-low .severity-badge {
+      background:rgba(16,185,129,0.2);
+      color:#6ee7b7;
+      border:1px solid var(--low);
+    }
+    
+    .quantum-badge {
+      display:inline-block;
+      padding:3px 8px;
+      border-radius:4px;
+      font-size:0.75rem;
+      font-weight:500;
+    }
+    
+    .quantum-true {
+      background:rgba(16,185,129,0.2);
+      color:#6ee7b7;
+    }
+    
+    .quantum-false {
+      background:rgba(248,81,73,0.2);
+      color:#fca5a5;
+    }
+    
+    .quantum-partial {
+      background:rgba(245,158,11,0.2);
+      color:#fcd34d;
+    }
+    
+    @media (max-width:900px) { 
+      .charts, .stats { 
+        grid-template-columns:1fr; 
+      } 
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🔐 Crypto Analysis Dashboard</h1>
-    <p style="color:#8b949e; margin-bottom:24px;">Cryptographic Bill of Materials (CBOM) Report</p>
+    <p class="subtitle">Cryptographic Bill of Materials (CBOM) — Grouped by File</p>
 
     <div class="stats">
       <div class="stat"><div class="num">${total}</div><div class="label">Total Assets</div></div>
-      <div class="stat"><div class="num">${high}</div><div class="label">High Risk</div></div>
-      <div class="stat"><div class="num">${medium}</div><div class="label">Medium Risk</div></div>
-      <div class="stat"><div class="num">${low}</div><div class="label">Low Risk</div></div>
+      <div class="stat high"><div class="num">${high}</div><div class="label">High Risk</div></div>
+      <div class="stat medium"><div class="num">${medium}</div><div class="label">Medium Risk</div></div>
+      <div class="stat low"><div class="num">${low}</div><div class="label">Low Risk</div></div>
       <div class="stat"><div class="num">${qSafe}</div><div class="label">Quantum-Safe</div></div>
-      <div class="stat"><div class="num">${qVuln}</div><div class="label">Vulnerable</div></div>
+      <div class="stat high"><div class="num">${qVuln}</div><div class="label">Vulnerable</div></div>
     </div>
 
     <div class="charts">
       <div class="card">
-        <h3 style="margin:0 0 16px 0;">Risk Distribution</h3>
+        <h3>Risk Distribution</h3>
         <canvas id="riskChart"></canvas>
       </div>
       <div class="card">
-        <h3 style="margin:0 0 16px 0;">Quantum Readiness</h3>
+        <h3>Quantum Readiness</h3>
         <canvas id="quantumChart"></canvas>
       </div>
     </div>
 
-    <div class="card">
-      <h3 style="margin:0 0 16px 0;">Detected Algorithms</h3>
-      <table>
-        <thead>
-          <tr><th>Algorithm</th><th>Type</th><th>Quantum-Safe</th><th>Severity</th><th>Risk Score</th><th>Occurrences</th><th>File</th></tr>
-        </thead>
-        <tbody>${rowsHtml}</tbody>
-      </table>
-    </div>
+    <h2 style="margin-top:32px;margin-bottom:16px;color:var(--accent);">Detections by File</h2>
+    ${fileSectionsHtml}
   </div>
 
   <script>
+    // File collapse/expand
+    function toggleFile(header) {
+      header.classList.toggle('collapsed');
+      const content = header.nextElementSibling;
+      content.classList.toggle('collapsed');
+    }
+
+    // Charts
     new Chart(document.getElementById('riskChart'), {
       type: 'doughnut',
       data: {
@@ -478,7 +771,11 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
           backgroundColor: ['#f85149','#f0ad4e','#3fb950']
         }]
       },
-      options: { plugins: { legend: { labels: { color: '#e6edf3' } } } }
+      options: { 
+        plugins: { 
+          legend: { labels: { color: '#e6edf3' } } 
+        } 
+      }
     });
 
     new Chart(document.getElementById('quantumChart'), {
@@ -505,6 +802,7 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
 
   try {
     fsSync.writeFileSync(outputPath, html, 'utf8');
+    console.log(`[generateDashboardHtml] ✅ Dashboard written: ${outputPath}`);
   } catch (err) {
     console.error('[generateDashboardHtml] Failed to write dashboard:', err);
     const fallback = path.join(os.tmpdir(), `crypto-detector-dashboard-${Date.now()}.html`);

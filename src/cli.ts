@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// src/cli.ts — Fixed CLI with proper error handling
+// src/cli.ts — Updated CLI with improved dashboard
 import { Command } from "commander";
 import * as fs from "fs/promises";
 import * as fsSync from "fs";
@@ -12,7 +12,7 @@ const program = new Command();
 program
   .name("crypto-detector")
   .description("CLI tool for cryptographic algorithm detection, GitHub scanning, CBOM generation and dashboards.")
-  .version("2.1.1");
+  .version("2.2.0");
 
 /* ---------------------------------------------------
    COMMAND 1: SCAN A SINGLE FILE
@@ -35,6 +35,11 @@ program
 
       const assets = await scanFile(filePath);
       console.log(`✅ Found ${assets.length} cryptographic algorithm(s)`);
+
+      if (assets.length === 0) {
+        console.log('ℹ️  No detections to report.');
+        return;
+      }
 
       const outputDir = path.resolve(options.output);
       fsSync.mkdirSync(outputDir, { recursive: true });
@@ -82,6 +87,11 @@ program
       console.log(`📁 Scanning workspace: ${root}`);
       const assets = await scanFolder(root);
       console.log(`✅ Found ${assets.length} cryptographic algorithm(s)`);
+
+      if (assets.length === 0) {
+        console.log('ℹ️  No detections to report.');
+        return;
+      }
 
       const outputDir = path.resolve(options.output);
       fsSync.mkdirSync(outputDir, { recursive: true });

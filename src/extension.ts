@@ -1,4 +1,4 @@
-// src/extension.ts — Fixed and Complete
+// src/extension.ts — Fixed with HTML dashboards for all commands
 import * as vscode from "vscode";
 import * as path from "path";
 import * as os from "os";
@@ -6,8 +6,7 @@ import * as fs from "fs";
 import { scanFile, scanFolder, scanGithubRepo, generateCBOM, generateDashboardHtml, openInBrowser } from "./core/scan-engine";
 import * as parser from "./parser";
 import * as highlighter from "./highlighter";
-import { getIBMStyleDashboard } from "./dashboard-ibm";
-import { generateAndDownloadCbom } from "./parser/report-writer";
+import { CryptoAsset } from "./parser/types";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("🔐 Crypto Detector Extension Activated");
@@ -16,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
   highlighter.registerHighlighter(context);
 
   /* ---------------------------------------------------
-     CMD: Scan Current File
+     CMD: Scan Current File - Opens HTML Dashboard
   --------------------------------------------------- */
   context.subscriptions.push(
     vscode.commands.registerCommand("crypto-detector.scan-file", async () => {
@@ -36,7 +35,6 @@ export function activate(context: vscode.ExtensionContext) {
         },
         async (progress) => {
           try {
-            // Use parser module for consistency
             const assets = await parser.detectInDocument(editor.document.uri);
 
             if (assets.length === 0) {
@@ -47,21 +45,12 @@ export function activate(context: vscode.ExtensionContext) {
             // Apply highlights
             await highlighter.applyHighlights(assets);
 
-            // Show dashboard
-            const panel = vscode.window.createWebviewPanel(
-              'cryptoDashboard',
-              `Crypto Analysis - ${path.basename(filePath)}`,
-              vscode.ViewColumn.One,
-              { enableScripts: true, retainContextWhenHidden: true }
-            );
-
-            panel.webview.html = getIBMStyleDashboard(assets);
-
-            panel.webview.onDidReceiveMessage(async (message) => {
-              if (message.command === 'generateCbom') {
-                await generateAndDownloadCbom(assets);
-              }
-            });
+            // Generate and open HTML dashboard
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'crypto-detector-'));
+            const dashboardPath = path.join(tempDir, 'dashboard.html');
+            
+            generateDashboardHtml(assets, dashboardPath);
+            openInBrowser(dashboardPath);
 
             vscode.window.showInformationMessage(
               `✅ Found ${assets.length} cryptographic algorithm(s) in ${path.basename(filePath)}`
@@ -76,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   /* ---------------------------------------------------
-     CMD: Scan Workspace
+     CMD: Scan Workspace - Opens HTML Dashboard
   --------------------------------------------------- */
   context.subscriptions.push(
     vscode.commands.registerCommand("crypto-detector.scan-workspace", async () => {
@@ -121,21 +110,12 @@ export function activate(context: vscode.ExtensionContext) {
             // Apply highlights
             await highlighter.applyHighlights(assets);
 
-            // Show dashboard
-            const panel = vscode.window.createWebviewPanel(
-              'cryptoDashboard',
-              'Crypto Analysis - Workspace',
-              vscode.ViewColumn.One,
-              { enableScripts: true, retainContextWhenHidden: true }
-            );
-
-            panel.webview.html = getIBMStyleDashboard(assets);
-
-            panel.webview.onDidReceiveMessage(async (message) => {
-              if (message.command === 'generateCbom') {
-                await generateAndDownloadCbom(assets);
-              }
-            });
+            // Generate and open HTML dashboard
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'crypto-detector-'));
+            const dashboardPath = path.join(tempDir, 'dashboard.html');
+            
+            generateDashboardHtml(assets, dashboardPath);
+            openInBrowser(dashboardPath);
 
             vscode.window.showInformationMessage(
               `✅ Workspace scan complete! Found ${assets.length} cryptographic algorithm(s).`
@@ -150,7 +130,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   /* ---------------------------------------------------
-     CMD: Scan GitHub Repo
+     CMD: Scan GitHub Repo - Opens HTML Dashboard
   --------------------------------------------------- */
   context.subscriptions.push(
     vscode.commands.registerCommand("crypto-detector.scan-github", async () => {
@@ -254,7 +234,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   /* ---------------------------------------------------
-     CMD: Show Dashboard
+     CMD: Show Dashboard - Opens HTML Dashboard
   --------------------------------------------------- */
   context.subscriptions.push(
     vscode.commands.registerCommand("crypto-detector.show-dashboard", async () => {
@@ -278,22 +258,16 @@ export function activate(context: vscode.ExtensionContext) {
               return;
             }
 
-            // Show dashboard in webview
-            const panel = vscode.window.createWebviewPanel(
-              'cryptoDashboard',
-              'Crypto Analysis Dashboard',
-              vscode.ViewColumn.One,
-              { enableScripts: true, retainContextWhenHidden: true }
+            // Generate and open HTML dashboard
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'crypto-detector-'));
+            const dashboardPath = path.join(tempDir, 'dashboard.html');
+            
+            generateDashboardHtml(assets, dashboardPath);
+            openInBrowser(dashboardPath);
+
+            vscode.window.showInformationMessage(
+              `✅ Dashboard opened with ${assets.length} detections`
             );
-
-            panel.webview.html = getIBMStyleDashboard(assets);
-
-            panel.webview.onDidReceiveMessage(async (message) => {
-              if (message.command === 'generateCbom') {
-                await generateAndDownloadCbom(assets);
-              }
-            });
-
           } catch (err: any) {
             console.error("Show dashboard error:", err);
             vscode.window.showErrorMessage(`❌ Failed to show dashboard: ${err.message}`);
