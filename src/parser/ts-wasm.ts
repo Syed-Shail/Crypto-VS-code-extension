@@ -138,6 +138,34 @@ export async function getParserForExtension(
 }
 
 /**
+ * Get a parser by VS Code language id when extension mapping is insufficient.
+ */
+export async function getParserForLanguageId(
+  languageId: string
+): Promise<{ langKey: WasmLang; parser: Parser } | null> {
+  const parsers = await getParsers();
+  const normalized = languageId.toLowerCase();
+
+  if (normalized === 'python' && parsers.python) {
+    return { langKey: 'python', parser: parsers.python };
+  }
+  if (normalized === 'java' && parsers.java) {
+    return { langKey: 'java', parser: parsers.java };
+  }
+  if (normalized === 'c' && parsers.c) {
+    return { langKey: 'c', parser: parsers.c };
+  }
+  if (['cpp', 'c++'].includes(normalized) && parsers.cpp) {
+    return { langKey: 'cpp', parser: parsers.cpp };
+  }
+  if (['javascript', 'javascriptreact', 'typescript', 'typescriptreact'].includes(normalized) && parsers.javascript) {
+    return { langKey: 'javascript', parser: parsers.javascript };
+  }
+
+  return null;
+}
+
+/**
  * Check if parsers are available
  */
 export async function areParsersAvailable(): Promise<boolean> {
