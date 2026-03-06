@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { CryptoAsset, Severity } from "./types";
 import { assignRisk } from "./risk-utils";
-import { getParserForExtension } from "./ts-wasm";
+import { getParserForExtension, getParsers, WasmLang } from "./ts-wasm";
 
 const rulesPath = path.join(__dirname, "rules", "crypto-rules.json");
 let CRYPTO_RULES: any = {};
@@ -73,10 +73,18 @@ function getNodeContext(node: any, text: string): string {
   return text.slice(start, end);
 }
 
-export async function detectMultiLang(uri: vscode.Uri): Promise<CryptoAsset[]> {
+export async function detectMultiLang(uri: vscode.Uri, preferredLangKey?: WasmLang): Promise<CryptoAsset[]> {
   try {
     const ext = path.extname(uri.fsPath);
-    const parserInfo = await getParserForExtension(ext).catch(() => null);
+    let parserInfo = await getParserForExtension(ext).catch(() => null);
+
+    if (preferredLangKey) {
+      const parsers = await getParsers();
+      const preferredParser = parsers[preferredLangKey];
+      if (preferredParser) {
+        parserInfo = { langKey: preferredLangKey, parser: preferredParser };
+      }
+    }
 
     if (!parserInfo) {
       return []; // No parser available, let regex handle it
