@@ -1,18 +1,10 @@
 // src/parser/index.ts
 import * as vscode from 'vscode';
-import { jsDetector } from './js-detector';
 import { regexDetector } from './regex-detector';
+import { detectMultiLang } from './multilang-detector';
 import { CryptoAsset } from './types';
 import * as path from 'path';
-
-// Import DetectorPlugin type
-import type { DetectorPlugin } from './detector-base';
-
-// Unified plugin registry
-const plugins: DetectorPlugin[] = [
-  jsDetector,
-  regexDetector
-];
+import { getParserForExtension, getParserForLanguageId } from './ts-wasm';
 
 /**
  * File extensions that should NOT be scanned (data files, configs, etc.)
@@ -57,21 +49,53 @@ function shouldSkipFile(uri: vscode.Uri): boolean {
   return false;
 }
 
-/**
- * Select appropriate detector based on file extension and language
- */
-function getDetectorForUri(uri: vscode.Uri): DetectorPlugin {
-  const ext = uri.fsPath.match(/\.[^.]+$/)?.[0]?.toLowerCase() || '';
-  
-  // Try to match by extension first
-  for (const plugin of plugins) {
-    if (plugin.extensions?.includes(ext)) {
-      return plugin;
+function dedupeAssets(assets: CryptoAsset[]): CryptoAsset[] {
+  const merged = new Map<string, CryptoAsset>();
+
+  for (const asset of assets) {
+    const normalizedName = (asset.name || '').toLowerCase();
+    const normalizedSource = asset.source || '';
+    const key = `${normalizedName}:${normalizedSource}:${asset.line}:${asset.type || asset.primitive || 'unknown'}`;
+    const existing = merged.get(key);
+
+    if (!existing) {
+      merged.set(key, { ...asset });
+      continue;
+    }
+
+    existing.occurrences = (existing.occurrences || 0) + (asset.occurrences || 1);
+    if (asset.detectionContexts?.length) {
+      existing.detectionContexts = existing.detectionContexts || [];
+      existing.detectionContexts.push(...asset.detectionContexts);
     }
   }
-  
-  // Fallback to regex detector for all other files
-  return regexDetector;
+
+  return Array.from(merged.values());
+}
+
+async function detectLanguageAware(uri: vscode.Uri): Promise<CryptoAsset[]> {
+  const ext = path.extname(uri.fsPath).toLowerCase();
+  const doc = await vscode.workspace.openTextDocument(uri);
+  const languageId = doc.languageId;
+
+  console.log(`🌐 Language detected: ${languageId} (${ext || 'no extension'})`);
+
+  const astDetections: CryptoAsset[] = [];
+  const parserInfoByLanguage = await getParserForLanguageId(languageId).catch(() => null);
+  const parserInfoByExtension = await getParserForExtension(ext).catch(() => null);
+  const parserInfo = parserInfoByLanguage || parserInfoByExtension;
+
+  if (parserInfo) {
+    console.log(`🧠 Using Tree-sitter parser: ${parserInfo.langKey}`);
+    astDetections.push(...(await detectMultiLang(uri, parserInfo.langKey).catch(() => [])));
+  } else {
+    console.log(`ℹ️ No parser configured for ${ext || languageId}; using regex-based detection`);
+  }
+
+  // Regex detection still runs as a complementary detector for language-specific rules.
+  const regexDetections = regexDetector.scan(doc.getText(), uri.fsPath);
+
+  return dedupeAssets([...astDetections, ...regexDetections]);
 }
 
 /**
@@ -85,12 +109,8 @@ export async function detectInDocument(uri: vscode.Uri): Promise<CryptoAsset[]> 
     return [];
   }
   
-  const detector = getDetectorForUri(uri);
-  const detectorName = detector === jsDetector ? 'JS/TS AST' : 'Regex';
-  console.log(`🔍 Using ${detectorName} detector for ${path.basename(uri.fsPath)}`);
-  
   try {
-    const results = await detector.detectInDocument(uri);
+    const results = await detectLanguageAware(uri);
     
     if (results.length > 0) {
       console.log(`✅ Found ${results.length} algorithm(s):`);
@@ -145,8 +165,7 @@ export async function scanWorkspace(
     }
 
     try {
-      const detector = getDetectorForUri(uri);
-      const assets = await detector.detectInDocument(uri);
+      const assets = await detectLanguageAware(uri);
       
       // Merge results by ID
       for (const asset of assets) {
