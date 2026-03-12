@@ -179,7 +179,8 @@ export class RegexDetector {
    * Check if line contains actual crypto usage (API call, assignment, etc.)
    */
   private hasValidCryptoContext(line: string, pattern: string): boolean {
-    const regex = new RegExp(`\\b${this.escapeRegex(pattern)}\\b`, 'i');
+    const escapedPattern = this.escapeRegex(pattern);
+    const regex = new RegExp(`\\b${escapedPattern}\\b`, 'i');
     
     // Must match the pattern
     if (!regex.test(line)) {
@@ -187,30 +188,34 @@ export class RegexDetector {
     }
 
     // Valid contexts:
-    // 1. Function/method call: pattern(, pattern., .pattern(
-    if (/\w+\s*\(/.test(line) || /\.\s*\w+\s*\(/.test(line)) {
+    // 1. Direct function/method call: pattern(, foo.pattern(, pattern.
+    if (
+      new RegExp(`\\b${escapedPattern}\\s*\\(`, 'i').test(line) ||
+      new RegExp(`\\.\\s*${escapedPattern}\\s*\\(`, 'i').test(line) ||
+      new RegExp(`\\b${escapedPattern}\\s*\\.`, 'i').test(line)
+    ) {
       return true;
     }
 
     // 2. Assignment: = pattern, : pattern
-    if (new RegExp(`[=:]\\s*.*${this.escapeRegex(pattern)}`, 'i').test(line)) {
+    if (new RegExp(`[=:]\\s*.*\\b${escapedPattern}\\b`, 'i').test(line)) {
       return true;
     }
 
     // 3. Method chaining: .pattern
-    if (new RegExp(`\\.\\s*${this.escapeRegex(pattern)}`, 'i').test(line)) {
+    if (new RegExp(`\\.\\s*${escapedPattern}\\b`, 'i').test(line)) {
       return true;
     }
 
     // 4. Instantiation: new pattern
-    if (new RegExp(`new\\s+${this.escapeRegex(pattern)}`, 'i').test(line)) {
+    if (new RegExp(`new\\s+${escapedPattern}\\b`, 'i').test(line)) {
       return true;
     }
 
     // 5. String that looks like algorithm name in crypto API
     if (/['"](md5|sha1|sha256|sha512|aes|rsa|des|3des|ecdsa)['"]/i.test(line)) {
       // But must have crypto context nearby
-      if (/\b(hash|digest|cipher|encrypt|decrypt|sign|verify|key|algorithm)\b/i.test(line)) {
+      if (/\b(hash|digest|cipher|encrypt|decrypt|sign|verify|key|algorithm|crypto)\b/i.test(line)) {
         return true;
       }
     }
@@ -227,6 +232,17 @@ export class RegexDetector {
     return `${rule}::${path.basename(filename)}::${lineNumber}::${snippetHash}`;
   }
 
+  private patternToRegex(pattern: string): RegExp {
+    const trimmed = (pattern || '').trim();
+    const wildcardEscaped = trimmed
+      .split('*')
+      .map((part) => this.escapeRegex(part))
+      .join('.*');
+
+    const source = /^\w+$/.test(trimmed) ? `\\b${wildcardEscaped}\\b` : wildcardEscaped;
+    return new RegExp(source, 'i');
+  }
+
   scan(content: string, filename: string): CryptoAsset[] {
     const results: CryptoAsset[] = [];
     const lines = content.split("\n");
@@ -240,8 +256,9 @@ export class RegexDetector {
       for (const pattern of patterns) {
         let regex: RegExp;
         try {
-          // Use word boundaries for cleaner matching
-          regex = new RegExp(`\\b${this.escapeRegex(pattern)}\\b`, "gi");
+          // Supports wildcard rule signatures such as Cipher.*AES and EVP_aes_*.
+          // NOTE: no global flag here, otherwise `.test()` can skip lines due to lastIndex state.
+          regex = this.patternToRegex(pattern);
         } catch (err) {
           console.warn(`[RegexDetector] Invalid pattern: ${pattern}`);
           continue;
@@ -253,9 +270,6 @@ export class RegexDetector {
           if (!regex.test(line)) {
             return;
           }
-
-          // Reset regex lastIndex for multiple tests
-          regex.lastIndex = 0;
 
           const lineNumber = index + 1;
           const snippet = line.trim();

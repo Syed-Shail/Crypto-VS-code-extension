@@ -1,4 +1,4 @@
-// src/parser/multilang-detector.ts - IMPROVED without duplicate text fallback
+// src/parser/multilang-detector.ts - language-aware AST detection
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
@@ -12,65 +12,118 @@ let CRYPTO_RULES: any = {};
 try {
   if (fs.existsSync(rulesPath)) {
     CRYPTO_RULES = JSON.parse(fs.readFileSync(rulesPath, "utf8"));
-    console.log('[MULTILANG] ✅ Loaded crypto-rules.json');
+    console.log("[MULTILANG] ✅ Loaded crypto-rules.json");
   }
 } catch (err) {
-  console.error('[MULTILANG] ❌ Failed to load crypto-rules.json:', err);
+  console.error("[MULTILANG] ❌ Failed to load crypto-rules.json:", err);
 }
 
 function escapeRegExp(str: string): string {
-  if (!str || typeof str !== 'string') return '';
+  if (!str || typeof str !== "string") return "";
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/**
- * Check if node represents actual crypto usage
- */
-function isValidCryptoNode(node: any, text: string, ruleName: string): boolean {
-  if (!node) return false;
-  
-  const nodeType = node.type?.toLowerCase() || '';
-  const snippet = text.slice(node.startIndex, node.endIndex);
-  
-  // Valid node types for crypto usage
-  const validTypes = [
-    'call_expression',          // function calls
-    'method_invocation',        // Java methods
-    'function_call',            // Python calls
-    'import_statement',         // imports (but check if crypto-related)
-    'assignment',               // variable assignments
-    'variable_declarator',      // variable declarations
-    'string_literal'            // only if in crypto context
-  ];
-  
-  // Skip if node type is too generic
-  if (nodeType === 'identifier' || nodeType === 'property_identifier') {
-    // These are only valid if parent is a call/assignment
-    return false;
-  }
-  
-  // Check if it's in a comment (AST should handle this, but double-check)
-  if (nodeType.includes('comment')) {
-    return false;
-  }
-  
-  // For string literals, require crypto context
-  if (nodeType.includes('string')) {
-    const parent = getNodeContext(node, text);
-    return parent.includes('getInstance') || 
-           parent.includes('createHash') ||
-           parent.includes('createCipher') ||
-           /\b(hash|digest|cipher|encrypt|algorithm)\b/i.test(parent);
-  }
-  
-  return true;
+function normalizeSignature(input: string): string {
+  return (input || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function patternToRegex(pattern: string): RegExp | null {
+  if (!pattern || typeof pattern !== "string") return null;
+
+  const trimmed = pattern.trim();
+  if (!trimmed) return null;
+
+  // Allow wildcard-style signatures from rules (e.g. Cipher.*AES, KeyPairGenerator.*RSA)
+  const wildcardEscaped = trimmed
+    .split("*")
+    .map((part) => escapeRegExp(part))
+    .join(".*");
+
+  // Word boundaries only for simple identifiers.
+  const source = /^\w+$/.test(trimmed) ? `\\b${wildcardEscaped}\\b` : wildcardEscaped;
+  return new RegExp(source, "i");
 }
 
 function getNodeContext(node: any, text: string): string {
-  // Get surrounding 100 chars for context
-  const start = Math.max(0, node.startIndex - 50);
-  const end = Math.min(text.length, node.endIndex + 50);
+  const start = Math.max(0, node.startIndex - 120);
+  const end = Math.min(text.length, node.endIndex + 120);
   return text.slice(start, end);
+}
+
+function hasCryptoContext(context: string): boolean {
+  return /\b(crypto|hash|digest|cipher|mac|hmac|encrypt|decrypt|sign|verify|keypair|keygen|getinstance|evp_|rsa_|ecdsa|curve|sha\d*|md5|aes|des|chacha)\b/i.test(context);
+}
+
+function isValidCryptoNode(node: any, text: string): boolean {
+  if (!node) return false;
+
+  const nodeType = (node.type || "").toLowerCase();
+  if (!nodeType) return false;
+
+  if (nodeType.includes("comment")) {
+    return false;
+  }
+
+  const context = getNodeContext(node, text);
+
+  const validTypeHints = [
+    "call_expression",
+    "method_invocation",
+    "function_call",
+    "call",
+    "assignment",
+    "variable_declarator",
+    "declaration",
+    "argument_list",
+    "field_expression",
+    "member_expression",
+    "string"
+  ];
+
+  const hasValidTypeHint = validTypeHints.some((hint) => nodeType.includes(hint));
+  if (!hasValidTypeHint) {
+    return false;
+  }
+
+  if (nodeType.includes("string")) {
+    return hasCryptoContext(context);
+  }
+
+  return true;
+}
+
+function ruleCandidates(rule: any): string[] {
+  const out = new Set<string>();
+  if (rule?.name) out.add(rule.name);
+  if (rule?.api) out.add(rule.api);
+  if (Array.isArray(rule?.patterns)) {
+    for (const p of rule.patterns) {
+      if (typeof p === "string" && p.trim()) out.add(p.trim());
+    }
+  }
+  return Array.from(out);
+}
+
+function matchesRuleSignature(snippet: string, rule: any): boolean {
+  const candidates = ruleCandidates(rule);
+  if (candidates.length === 0) return false;
+
+  const normalizedSnippet = normalizeSignature(snippet);
+
+  for (const candidate of candidates) {
+    const regex = patternToRegex(candidate);
+    if (regex && regex.test(snippet)) {
+      return true;
+    }
+
+    // Normalized fallback: helps detect variants like SHA-256 vs SHA256.
+    const normalizedCandidate = normalizeSignature(candidate);
+    if (normalizedCandidate && normalizedSnippet.includes(normalizedCandidate)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export async function detectMultiLang(uri: vscode.Uri, preferredLangKey?: WasmLang): Promise<CryptoAsset[]> {
@@ -87,13 +140,12 @@ export async function detectMultiLang(uri: vscode.Uri, preferredLangKey?: WasmLa
     }
 
     if (!parserInfo) {
-      return []; // No parser available, let regex handle it
+      return [];
     }
 
     const { langKey, parser } = parserInfo;
     const langRules = CRYPTO_RULES[langKey] || [];
-
-    if (!langRules || langRules.length === 0) {
+    if (!Array.isArray(langRules) || langRules.length === 0) {
       return [];
     }
 
@@ -101,10 +153,7 @@ export async function detectMultiLang(uri: vscode.Uri, preferredLangKey?: WasmLa
 
     const doc = await vscode.workspace.openTextDocument(uri);
     const text = doc.getText();
-    
-    if (!text || text.length === 0) {
-      return [];
-    }
+    if (!text) return [];
 
     const tree = parser.parse(text);
     const results: CryptoAsset[] = [];
@@ -112,79 +161,66 @@ export async function detectMultiLang(uri: vscode.Uri, preferredLangKey?: WasmLa
 
     function walk(node: any) {
       if (!node) return;
-      
+
       try {
         const snippet = text.slice(node.startIndex, node.endIndex);
-        if (!snippet || snippet.length > 1000) { // Skip huge nodes
-          // Still walk children
+        if (!snippet || snippet.length > 1200) {
           if (node.childCount) {
-            for (let i = 0; i < node.childCount; i++) {
-              walk(node.child(i));
-            }
+            for (let i = 0; i < node.childCount; i++) walk(node.child(i));
+          }
+          return;
+        }
+
+        if (!isValidCryptoNode(node, text)) {
+          if (node.childCount) {
+            for (let i = 0; i < node.childCount; i++) walk(node.child(i));
           }
           return;
         }
 
         for (const rule of langRules) {
-          if (!rule || !rule.name) continue;
-          
-          try {
-            const escaped = escapeRegExp(rule.name);
-            if (!escaped) continue;
-            
-            const pattern = new RegExp(`\\b${escaped}\\b`, "i");
+          if (!rule?.name) continue;
 
-            if (pattern.test(snippet)) {
-              // Validate this is a real crypto usage
-              if (!isValidCryptoNode(node, text, rule.name)) {
-                continue;
-              }
-
-              const line = text.substring(0, node.startIndex).split("\n").length || 1;
-              
-              // Strong deduplication key
-              const snippetHash = snippet.trim().substring(0, 100).replace(/\s+/g, ' ');
-              const detectionKey = `${rule.name}:${path.basename(uri.fsPath)}:${line}:${snippetHash}`;
-              
-              if (seenDetections.has(detectionKey)) continue;
-              seenDetections.add(detectionKey);
-
-              const risk = assignRisk(rule.quantumSafe, rule.type ?? rule.primitive, rule.name);
-
-              results.push({
-                name: rule.name,
-                type: rule.type ?? rule.primitive ?? 'unknown',
-                primitive: rule.primitive ?? rule.type ?? 'unknown',
-                assetType: "algorithm",
-                description: rule.description ?? "",
-                quantumSafe: rule.quantumSafe ?? 'unknown',
-                severity: risk.severity as Severity,
-                score: risk.score,
-                riskScore: risk.score,
-                reason: risk.explanation,
-                source: uri.fsPath,
-                line,
-                occurrences: 1,
-                id: `ast:${(rule.name || 'unknown').toLowerCase()}-${path.basename(uri.fsPath)}-${line}`,
-                detectionContexts: [
-                  {
-                    filePath: uri.fsPath,
-                    lineNumbers: [line],
-                    snippet: snippet.substring(0, 300)
-                  }
-                ]
-              });
-            }
-          } catch (err) {
-            // Skip this rule
+          if (!matchesRuleSignature(snippet, rule)) {
+            continue;
           }
+
+          const line = text.substring(0, node.startIndex).split("\n").length || 1;
+          const snippetHash = snippet.trim().substring(0, 120).replace(/\s+/g, " ");
+          const detectionKey = `${rule.name}:${path.basename(uri.fsPath)}:${line}:${snippetHash}`;
+
+          if (seenDetections.has(detectionKey)) continue;
+          seenDetections.add(detectionKey);
+
+          const risk = assignRisk(rule.quantumSafe, rule.type ?? rule.primitive, rule.name);
+
+          results.push({
+            name: rule.name,
+            type: rule.type ?? rule.primitive ?? "unknown",
+            primitive: rule.primitive ?? rule.type ?? "unknown",
+            assetType: "algorithm",
+            description: rule.description ?? "",
+            quantumSafe: rule.quantumSafe ?? "unknown",
+            severity: risk.severity as Severity,
+            score: risk.score,
+            riskScore: risk.score,
+            reason: risk.explanation,
+            source: uri.fsPath,
+            line,
+            occurrences: 1,
+            id: `ast:${(rule.name || "unknown").toLowerCase()}-${path.basename(uri.fsPath)}-${line}`,
+            detectionContexts: [
+              {
+                filePath: uri.fsPath,
+                lineNumbers: [line],
+                snippet: snippet.substring(0, 300)
+              }
+            ]
+          });
         }
 
-        // Recursively walk children
         if (node.childCount) {
-          for (let i = 0; i < node.childCount; i++) {
-            walk(node.child(i));
-          }
+          for (let i = 0; i < node.childCount; i++) walk(node.child(i));
         }
       } catch (err) {
         // Continue walking
@@ -193,13 +229,10 @@ export async function detectMultiLang(uri: vscode.Uri, preferredLangKey?: WasmLa
 
     walk(tree.rootNode);
 
-    // NO TEXT FALLBACK - Let regex detector handle patterns missed by AST
-    // This prevents duplicates since regex detector is always run anyway
-
     console.log(`[MULTILANG] ✅ AST found ${results.length} detections`);
     return results;
   } catch (err) {
-    console.error('[MULTILANG] detectMultiLang error:', err);
+    console.error("[MULTILANG] detectMultiLang error:", err);
     return [];
   }
 }
