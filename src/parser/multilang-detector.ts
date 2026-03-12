@@ -51,7 +51,7 @@ function getNodeContext(node: any, text: string): string {
 }
 
 function hasCryptoContext(context: string): boolean {
-  return /\b(crypto|hash|digest|cipher|mac|hmac|encrypt|decrypt|sign|verify|keypair|keygen|getinstance|evp_|rsa_|ecdsa|curve|sha\d*|md5|aes|des|chacha)\b/i.test(context);
+  return /\b(crypto|hash|digest|cipher|mac|hmac|encrypt|decrypt|sign|verify|keypair|keygen|getinstance|curve|sha\d*|md5|aes|des|chacha)\b|\bevp_[a-z0-9_]*|\brsa_[a-z0-9_]*|\becdsa\b/i.test(context);
 }
 
 function isValidCryptoNode(node: any, text: string): boolean {
@@ -67,6 +67,8 @@ function isValidCryptoNode(node: any, text: string): boolean {
   const context = getNodeContext(node, text);
 
   const validTypeHints = [
+    "import_statement",
+    "import_declaration",
     "call_expression",
     "method_invocation",
     "function_call",
