@@ -256,9 +256,9 @@ export class RegexDetector {
       for (const pattern of patterns) {
         let regex: RegExp;
         try {
-          // Supports wildcard rule signatures such as Cipher.*AES and EVP_aes_*.
+          // Use word boundaries for cleaner matching.
           // NOTE: no global flag here, otherwise `.test()` can skip lines due to lastIndex state.
-          regex = this.patternToRegex(pattern);
+          regex = new RegExp(`\\b${this.escapeRegex(pattern)}\\b`, "i");
         } catch (err) {
           console.warn(`[RegexDetector] Invalid pattern: ${pattern}`);
           continue;
