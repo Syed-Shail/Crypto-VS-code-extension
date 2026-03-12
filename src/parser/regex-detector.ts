@@ -232,6 +232,17 @@ export class RegexDetector {
     return `${rule}::${path.basename(filename)}::${lineNumber}::${snippetHash}`;
   }
 
+  private patternToRegex(pattern: string): RegExp {
+    const trimmed = (pattern || '').trim();
+    const wildcardEscaped = trimmed
+      .split('*')
+      .map((part) => this.escapeRegex(part))
+      .join('.*');
+
+    const source = /^\w+$/.test(trimmed) ? `\\b${wildcardEscaped}\\b` : wildcardEscaped;
+    return new RegExp(source, 'i');
+  }
+
   scan(content: string, filename: string): CryptoAsset[] {
     const results: CryptoAsset[] = [];
     const lines = content.split("\n");
