@@ -190,6 +190,10 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
         };
 
         if (a.quantumSafe === true) {
+          return 'Current algorithm is already quantum-safe';
+        }
+
+        return byName[name] || byPrimitive[primitive] || 'Use a NIST-standard post-quantum or modern vetted primitive for this use-case';
           return {
             alternative: 'Current algorithm is already quantum-safe',
             basis: 'No migration suggested because this detection is marked quantum-safe.'
@@ -220,6 +224,7 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
           '<td>' + (String(a.quantumSafe ?? 'Unknown')) + '</td>' +
           '<td>' + (a.riskScore ?? '-') + '</td>' +
           '<td>' + ((a.severity ?? '-').toUpperCase()) + '</td>' +
+          '<td>' + getSuggestion(a) + '</td>' +
           '<td>' + getSuggestion(a).alternative + '</td>' +
           '<td>' + getSuggestion(a).basis + '</td>' +
         '</tr>';
@@ -227,6 +232,7 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
 
       function renderTable(list) {
         if (!list || list.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888">No matching algorithms</td></tr>';
           tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888">No matching algorithms</td></tr>';
           return;
         }
