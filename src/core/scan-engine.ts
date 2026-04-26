@@ -11,6 +11,7 @@ import * as vscode from 'vscode';
 // Import the improved parser module
 import { regexDetector } from '../parser/regex-detector';
 import { CryptoAsset } from '../parser/types';
+import { getQuantumAlternativeSuggestion } from '../parser/quantum-alternatives';
 
 /* ----------------------- Types ----------------------- */
 export { CryptoAsset };
@@ -349,7 +350,8 @@ export async function generateCBOM(assets: CryptoAsset[], outputPath: string): P
       },
       quantumSafe: `${asset.quantumSafe ?? "unknown"}`,
       severity: asset.severity ?? "unknown",
-      riskScore: asset.riskScore ?? asset.score ?? 0
+      riskScore: asset.riskScore ?? asset.score ?? 0,
+      migrationRecommendation: getQuantumAlternativeSuggestion(asset)
     }
   }));
 
@@ -433,6 +435,8 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
                 <th>Quantum-Safe</th>
                 <th>Severity</th>
                 <th>Risk Score</th>
+                <th>Suggested Alternative</th>
+                <th>Suggestion Basis</th>
               </tr>
             </thead>
             <tbody>
@@ -451,6 +455,7 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
         ? `${lineNumbers[0]}-${lineNumbers[lineNumbers.length - 1]}`
         : String(lineNumbers[0] || 0);
 
+      const suggestion = getQuantumAlternativeSuggestion(asset);
       fileSectionsHtml += `
         <tr class="severity-${escapeHtml(String(asset.severity || 'unknown'))}">
           <td class="line-number">${lineStr}</td>
@@ -459,6 +464,8 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
           <td><span class="quantum-badge quantum-${escapeHtml(String(asset.quantumSafe))}">${escapeHtml(String(asset.quantumSafe))}</span></td>
           <td><span class="severity-badge">${escapeHtml(String(asset.severity || 'unknown').toUpperCase())}</span></td>
           <td>${escapeHtml(String(asset.riskScore ?? asset.score ?? 0))}</td>
+          <td>${escapeHtml(suggestion.alternative)}</td>
+          <td>${escapeHtml(suggestion.basis)}</td>
         </tr>
       `;
     }
