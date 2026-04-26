@@ -3,7 +3,7 @@ import { CryptoAsset, Severity } from "./types";
 import { assignRisk } from "./risk-utils";
 import * as fs from "fs";
 import * as path from "path";
-import * as vscode from "vscode";
+import type * as vscode from "vscode";
 
 interface DetectionRule {
   name: string;
@@ -78,11 +78,6 @@ export class RegexDetector {
       return true;
     }
 
-    // Skip if pattern appears only in a string literal (not as function call)
-    if (this.isOnlyInStringLiteral(trimmed, pattern)) {
-      return true;
-    }
-
     return false;
   }
 
@@ -149,14 +144,17 @@ export class RegexDetector {
     return false;
   }
 
-  private isOnlyInStringLiteral(line: string, pattern: string): boolean {
+  private isOnlyInStringLiteral(line: string, regex: RegExp, pattern: string): boolean {
+    // Complex API signatures frequently include string literals by design
+    if (/[*()."']/.test(pattern)) {
+      return false;
+    }
+
     // Remove all string literals and check if pattern still exists
     const withoutStrings = line
       .replace(/"[^"]*"/g, '""')
       .replace(/'[^']*'/g, "''")
       .replace(/`[^`]*`/g, '``');
-    
-    const regex = new RegExp(`\\b${this.escapeRegex(pattern)}\\b`, 'i');
     
     // If pattern doesn't exist after removing strings, it was only in strings
     if (!regex.test(withoutStrings)) {
@@ -178,13 +176,19 @@ export class RegexDetector {
   /**
    * Check if line contains actual crypto usage (API call, assignment, etc.)
    */
-  private hasValidCryptoContext(line: string, pattern: string): boolean {
-    const escapedPattern = this.escapeRegex(pattern);
-    const regex = new RegExp(`\\b${escapedPattern}\\b`, 'i');
+  private hasValidCryptoContext(line: string, pattern: string, regex: RegExp): boolean {
     
     // Must match the pattern
     if (!regex.test(line)) {
       return false;
+    }
+
+    const matchedToken = line.match(regex)?.[0] ?? pattern;
+    const escapedPattern = this.escapeRegex(matchedToken);
+    const isComplexPattern = /[*()."']/.test(pattern);
+
+    if (isComplexPattern) {
+      return /\b(crypto|hash|digest|cipher|encrypt|decrypt|sign|verify|key|messagedigest|keypairgenerator|hashlib|evp_)\b/i.test(line);
     }
 
     // Valid contexts:
@@ -234,12 +238,14 @@ export class RegexDetector {
 
   private patternToRegex(pattern: string): RegExp {
     const trimmed = (pattern || '').trim();
-    const wildcardEscaped = trimmed
-      .split('*')
-      .map((part) => this.escapeRegex(part))
-      .join('.*');
+    const wildcardEscaped = trimmed.includes('*')
+      ? trimmed
+          .split('*')
+          .map((part) => this.escapeRegex(part))
+          .join('.*')
+      : this.escapeRegex(trimmed);
 
-    const source = /^\w+$/.test(trimmed) ? `\\b${wildcardEscaped}\\b` : wildcardEscaped;
+    const source = /^[\w-]+$/.test(trimmed) ? `\\b${wildcardEscaped}\\b` : wildcardEscaped;
     return new RegExp(source, 'i');
   }
 
@@ -256,9 +262,7 @@ export class RegexDetector {
       for (const pattern of patterns) {
         let regex: RegExp;
         try {
-          // Use word boundaries for cleaner matching.
-          // NOTE: no global flag here, otherwise `.test()` can skip lines due to lastIndex state.
-          regex = new RegExp(`\\b${this.escapeRegex(pattern)}\\b`, "i");
+          regex = this.patternToRegex(pattern);
         } catch (err) {
           console.warn(`[RegexDetector] Invalid pattern: ${pattern}`);
           continue;
@@ -279,8 +283,13 @@ export class RegexDetector {
             return;
           }
 
+          // Skip if pattern appears only inside string literals
+          if (this.isOnlyInStringLiteral(line, regex, pattern)) {
+            return;
+          }
+
           // Require valid crypto context
-          if (!this.hasValidCryptoContext(line, pattern)) {
+          if (!this.hasValidCryptoContext(line, pattern, regex)) {
             return;
           }
 
