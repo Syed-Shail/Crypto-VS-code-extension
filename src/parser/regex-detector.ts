@@ -3,7 +3,7 @@ import { CryptoAsset, Severity } from "./types";
 import { assignRisk } from "./risk-utils";
 import * as fs from "fs";
 import * as path from "path";
-import * as vscode from "vscode";
+import type * as vscode from "vscode";
 
 interface DetectionRule {
   name: string;
@@ -78,11 +78,6 @@ export class RegexDetector {
       return true;
     }
 
-    // Skip if pattern appears only in a string literal (not as function call)
-    if (this.isOnlyInStringLiteral(trimmed, pattern)) {
-      return true;
-    }
-
     return false;
   }
 
@@ -149,14 +144,17 @@ export class RegexDetector {
     return false;
   }
 
-  private isOnlyInStringLiteral(line: string, pattern: string): boolean {
+  private isOnlyInStringLiteral(line: string, regex: RegExp, pattern: string): boolean {
+    // Complex API signatures frequently include string literals by design
+    if (/[*()."']/.test(pattern)) {
+      return false;
+    }
+
     // Remove all string literals and check if pattern still exists
     const withoutStrings = line
       .replace(/"[^"]*"/g, '""')
       .replace(/'[^']*'/g, "''")
       .replace(/`[^`]*`/g, '``');
-    
-    const regex = new RegExp(`\\b${this.escapeRegex(pattern)}\\b`, 'i');
     
     // If pattern doesn't exist after removing strings, it was only in strings
     if (!regex.test(withoutStrings)) {
@@ -276,6 +274,11 @@ export class RegexDetector {
 
           // Skip false positives
           if (this.isLikelyFalsePositive(line, pattern)) {
+            return;
+          }
+
+          // Skip if pattern appears only inside string literals
+          if (this.isOnlyInStringLiteral(line, regex, pattern)) {
             return;
           }
 
