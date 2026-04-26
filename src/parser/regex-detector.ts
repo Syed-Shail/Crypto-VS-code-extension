@@ -183,13 +183,7 @@ export class RegexDetector {
       return false;
     }
 
-    const matchedToken = line.match(regex)?.[0] ?? pattern;
-    const escapedPattern = this.escapeRegex(matchedToken);
-    const isComplexPattern = /[*()."']/.test(pattern);
-
-    if (isComplexPattern) {
-      return /\b(crypto|hash|digest|cipher|encrypt|decrypt|sign|verify|key|messagedigest|keypairgenerator|hashlib|evp_)\b/i.test(line);
-    }
+    const escapedPattern = this.escapeRegex(pattern);
 
     // Valid contexts:
     // 1. Direct function/method call: pattern(, foo.pattern(, pattern.
