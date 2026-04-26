@@ -34,6 +34,7 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
       '<td>' + (a.riskScore ?? '-') + '</td>' +
       '<td>' + ((a.severity ?? '-').toUpperCase()) + '</td>' +
       '<td>' + suggestion.alternative + '</td>' +
+      '<td>' + suggestion.basis + '</td>' +
     '</tr>'
   }).join('');
 
@@ -148,6 +149,7 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
           <th>Risk Score</th>
           <th>Severity</th>
           <th>Suggested Alternative</th>
+          <th>Basis</th>
         </tr>
       </thead>
       <tbody id="resultsTableBody">
@@ -192,6 +194,23 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
         }
 
         return byName[name] || byPrimitive[primitive] || 'Use a NIST-standard post-quantum or modern vetted primitive for this use-case';
+          return {
+            alternative: 'Current algorithm is already quantum-safe',
+            basis: 'No migration suggested because this detection is marked quantum-safe.'
+          };
+        }
+
+        const alternative = byName[name] || byPrimitive[primitive] || 'Use a NIST-standard post-quantum or modern vetted primitive for this use-case';
+        const status = a.quantumSafe === false
+          ? 'Detected as non-quantum-safe.'
+          : a.quantumSafe === 'partial'
+            ? 'Detected as partially quantum-resistant.'
+            : 'Quantum-safety status is unknown.';
+
+        return {
+          alternative,
+          basis: status + ' Suggestion is selected by matching the detected algorithm name first, then falling back to its primitive category (' + (primitive || 'unknown') + ') and preferring NIST-standardized or widely recommended modern algorithms.'
+        };
       }
 
       const vscode = acquireVsCodeApi();
@@ -206,12 +225,15 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
           '<td>' + (a.riskScore ?? '-') + '</td>' +
           '<td>' + ((a.severity ?? '-').toUpperCase()) + '</td>' +
           '<td>' + getSuggestion(a) + '</td>' +
+          '<td>' + getSuggestion(a).alternative + '</td>' +
+          '<td>' + getSuggestion(a).basis + '</td>' +
         '</tr>';
       }
 
       function renderTable(list) {
         if (!list || list.length === 0) {
           tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888">No matching algorithms</td></tr>';
+          tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888">No matching algorithms</td></tr>';
           return;
         }
         let html = '';
