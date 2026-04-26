@@ -178,14 +178,14 @@ export class RegexDetector {
   /**
    * Check if line contains actual crypto usage (API call, assignment, etc.)
    */
-  private hasValidCryptoContext(line: string, pattern: string): boolean {
-    const escapedPattern = this.escapeRegex(pattern);
-    const regex = new RegExp(`\\b${escapedPattern}\\b`, 'i');
+  private hasValidCryptoContext(line: string, pattern: string, regex: RegExp): boolean {
     
     // Must match the pattern
     if (!regex.test(line)) {
       return false;
     }
+
+    const escapedPattern = this.escapeRegex(pattern);
 
     // Valid contexts:
     // 1. Direct function/method call: pattern(, foo.pattern(, pattern.
@@ -234,12 +234,14 @@ export class RegexDetector {
 
   private patternToRegex(pattern: string): RegExp {
     const trimmed = (pattern || '').trim();
-    const wildcardEscaped = trimmed
-      .split('*')
-      .map((part) => this.escapeRegex(part))
-      .join('.*');
+    const wildcardEscaped = trimmed.includes('*')
+      ? trimmed
+          .split('*')
+          .map((part) => this.escapeRegex(part))
+          .join('.*')
+      : this.escapeRegex(trimmed);
 
-    const source = /^\w+$/.test(trimmed) ? `\\b${wildcardEscaped}\\b` : wildcardEscaped;
+    const source = /^[\w-]+$/.test(trimmed) ? `\\b${wildcardEscaped}\\b` : wildcardEscaped;
     return new RegExp(source, 'i');
   }
 
@@ -256,9 +258,7 @@ export class RegexDetector {
       for (const pattern of patterns) {
         let regex: RegExp;
         try {
-          // Use word boundaries for cleaner matching.
-          // NOTE: no global flag here, otherwise `.test()` can skip lines due to lastIndex state.
-          regex = new RegExp(`\\b${this.escapeRegex(pattern)}\\b`, "i");
+          regex = this.patternToRegex(pattern);
         } catch (err) {
           console.warn(`[RegexDetector] Invalid pattern: ${pattern}`);
           continue;
@@ -280,7 +280,7 @@ export class RegexDetector {
           }
 
           // Require valid crypto context
-          if (!this.hasValidCryptoContext(line, pattern)) {
+          if (!this.hasValidCryptoContext(line, pattern, regex)) {
             return;
           }
 

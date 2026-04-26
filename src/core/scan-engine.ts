@@ -351,6 +351,7 @@ export async function generateCBOM(assets: CryptoAsset[], outputPath: string): P
       quantumSafe: `${asset.quantumSafe ?? "unknown"}`,
       severity: asset.severity ?? "unknown",
       riskScore: asset.riskScore ?? asset.score ?? 0,
+      migrationRecommendation: getQuantumAlternativeSuggestion(asset).alternative
       migrationRecommendation: getQuantumAlternativeSuggestion(asset)
     }
   }));

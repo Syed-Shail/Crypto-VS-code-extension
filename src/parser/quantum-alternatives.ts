@@ -36,6 +36,7 @@ function normalize(input?: string): string {
 export function getQuantumAlternativeSuggestion(asset: CryptoAsset): QuantumAlternativeSuggestion {
   if (asset.quantumSafe === true) {
     return {
+      alternative: 'Current algorithm is already quantum-safe'
       alternative: 'Current algorithm is already quantum-safe',
       basis: 'No migration suggested because this detection is marked quantum-safe.'
     };
@@ -46,6 +47,9 @@ export function getQuantumAlternativeSuggestion(asset: CryptoAsset): QuantumAlte
   const specific = algorithmSpecificAlternatives[normalizedName];
   const fallback = primitiveFallbackAlternatives[normalizedPrimitive];
 
+  return {
+    alternative: specific ?? fallback ?? 'Use a NIST-standard post-quantum or modern vetted primitive for this use-case'
+  };
   const alternative = specific ?? fallback ?? 'Use a NIST-standard post-quantum or modern vetted primitive for this use-case';
 
   const safetyStatus = asset.quantumSafe === false
