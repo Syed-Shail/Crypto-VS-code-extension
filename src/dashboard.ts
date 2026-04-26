@@ -1,5 +1,6 @@
 // src/dashboard.ts
 import { CryptoAsset } from './parser/types';
+import { getQuantumAlternativeSuggestion } from './parser/quantum-alternatives';
 
 /**
  * Builds the HTML dashboard view with multiple charts and a summary table.
@@ -24,15 +25,17 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
   const topRisk = [...assets].sort((a, b) => (b.riskScore ?? b.score ?? 0) - (a.riskScore ?? a.score ?? 0)).slice(0, 5);
 
   // Pre-build rows for the initial table (server-side)
-  const initialRows = assets.map(a =>
-    '<tr>' +
+  const initialRows = assets.map(a => {
+    const suggestion = getQuantumAlternativeSuggestion(a);
+    return '<tr>' +
       '<td>' + (a.name ?? 'Unknown') + '</td>' +
       '<td>' + (a.primitive ?? 'Unknown') + '</td>' +
       '<td>' + (String(a.quantumSafe ?? 'Unknown')) + '</td>' +
       '<td>' + (a.riskScore ?? '-') + '</td>' +
       '<td>' + ((a.severity ?? '-').toUpperCase()) + '</td>' +
+      '<td>' + suggestion.alternative + '</td>' +
     '</tr>'
-  ).join('');
+  }).join('');
 
   // Serialize some data to be used by client-side script
   const assetsJson = JSON.stringify(assets);
@@ -144,6 +147,7 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
           <th>Quantum Safe</th>
           <th>Risk Score</th>
           <th>Severity</th>
+          <th>Suggested Alternative</th>
         </tr>
       </thead>
       <tbody id="resultsTableBody">
@@ -157,6 +161,39 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
       const typeCounts = ${typeCountsJson};
       const topRisk = ${topRiskJson};
 
+      function getSuggestion(a) {
+        const name = (a.name || '').trim().toLowerCase();
+        const primitive = (a.primitive || a.type || '').trim().toLowerCase();
+        const byName = {
+          rsa: 'ML-KEM (Kyber) for key establishment + ML-DSA (Dilithium) for signatures',
+          ecc: 'ML-KEM (Kyber) for key establishment + ML-DSA (Dilithium) for signatures',
+          ecdsa: 'ML-DSA (Dilithium) or SPHINCS+ for digital signatures',
+          ecdh: 'ML-KEM (Kyber) for key establishment',
+          dsa: 'ML-DSA (Dilithium) for digital signatures',
+          ed25519: 'ML-DSA (Dilithium) or SPHINCS+ for digital signatures',
+          x25519: 'ML-KEM (Kyber) for key establishment',
+          md5: 'SHA3-256 or SHA-512 (and HMAC where authenticity is needed)',
+          sha1: 'SHA3-256 or SHA-512',
+          des: 'AES-256-GCM or ChaCha20-Poly1305',
+          '3des': 'AES-256-GCM or ChaCha20-Poly1305',
+          blowfish: 'AES-256-GCM or ChaCha20-Poly1305',
+          rc4: 'AES-256-GCM or ChaCha20-Poly1305'
+        };
+        const byPrimitive = {
+          asymmetric: 'NIST PQC algorithms (ML-KEM / ML-DSA / SLH-DSA) based on use-case',
+          'key-exchange': 'ML-KEM (Kyber) for key establishment',
+          hash: 'SHA3-256 or SHA-512 depending on compatibility and performance needs',
+          symmetric: 'AES-256-GCM or ChaCha20-Poly1305 with modern key management',
+          mac: 'HMAC-SHA-512 or KMAC (SHA-3 family)'
+        };
+
+        if (a.quantumSafe === true) {
+          return 'Current algorithm is already quantum-safe';
+        }
+
+        return byName[name] || byPrimitive[primitive] || 'Use a NIST-standard post-quantum or modern vetted primitive for this use-case';
+      }
+
       const vscode = acquireVsCodeApi();
       const tableBody = document.getElementById('resultsTableBody');
 
@@ -168,12 +205,13 @@ export function getDashboardHtml(assets: CryptoAsset[]): string {
           '<td>' + (String(a.quantumSafe ?? 'Unknown')) + '</td>' +
           '<td>' + (a.riskScore ?? '-') + '</td>' +
           '<td>' + ((a.severity ?? '-').toUpperCase()) + '</td>' +
+          '<td>' + getSuggestion(a) + '</td>' +
         '</tr>';
       }
 
       function renderTable(list) {
         if (!list || list.length === 0) {
-          tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888">No matching algorithms</td></tr>';
+          tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888">No matching algorithms</td></tr>';
           return;
         }
         let html = '';
