@@ -11,6 +11,7 @@ import * as vscode from 'vscode';
 // Import the improved parser module
 import { regexDetector } from '../parser/regex-detector';
 import { CryptoAsset } from '../parser/types';
+import { getQuantumAlternativeSuggestion } from '../parser/quantum-alternatives';
 
 /* ----------------------- Types ----------------------- */
 export { CryptoAsset };
@@ -349,7 +350,8 @@ export async function generateCBOM(assets: CryptoAsset[], outputPath: string): P
       },
       quantumSafe: `${asset.quantumSafe ?? "unknown"}`,
       severity: asset.severity ?? "unknown",
-      riskScore: asset.riskScore ?? asset.score ?? 0
+      riskScore: asset.riskScore ?? asset.score ?? 0,
+      migrationRecommendation: getQuantumAlternativeSuggestion(asset).alternative
     }
   }));
 
@@ -386,18 +388,48 @@ export async function generateCBOM(assets: CryptoAsset[], outputPath: string): P
 // src/core/scan-engine.ts - Enhanced generateDashboardHtml with file grouping
 
 export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string): void {
-  // Group assets by file
-  const byFile: Record<string, CryptoAsset[]> = {};
-  
+  type DashboardRow = {
+    asset: CryptoAsset;
+    file: string;
+    line: number;
+  };
+
+  // Group normalized rows by file and deduplicate by (file, line, algorithm)
+  const byFile: Record<string, DashboardRow[]> = {};
+  const seenRows = new Set<string>();
+
   for (const asset of assets) {
-    const contexts = asset.detectionContexts || [];
-    for (const ctx of contexts) {
-      const file = ctx.filePath || asset.source || 'Unknown';
-      if (!byFile[file]) {
-        byFile[file] = [];
+    const contexts = asset.detectionContexts ?? [];
+
+    // Build rows from detailed contexts when available
+    if (contexts.length > 0) {
+      for (const ctx of contexts) {
+        const file = ctx.filePath || asset.source || 'Unknown';
+        const lineNumbers = ctx.lineNumbers && ctx.lineNumbers.length > 0
+          ? ctx.lineNumbers
+          : [asset.line || 0];
+
+        for (const line of lineNumbers) {
+          const key = `${file}::${line}::${asset.name}`;
+          if (seenRows.has(key)) continue;
+          seenRows.add(key);
+
+          if (!byFile[file]) byFile[file] = [];
+          byFile[file].push({ asset, file, line });
+        }
       }
-      byFile[file].push(asset);
+      continue;
     }
+
+    // Fallback for detectors that only provide source/line
+    const file = asset.source || 'Unknown';
+    const line = asset.line || 0;
+    const key = `${file}::${line}::${asset.name}`;
+    if (seenRows.has(key)) continue;
+    seenRows.add(key);
+
+    if (!byFile[file]) byFile[file] = [];
+    byFile[file].push({ asset, file, line });
   }
 
   const files = Object.keys(byFile).sort();
@@ -412,14 +444,14 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
   let fileSectionsHtml = '';
   for (const file of files) {
     const filename = path.basename(file);
-    const fileAssets = byFile[file];
+    const fileRows = byFile[file];
     
     fileSectionsHtml += `
       <div class="file-section">
         <div class="file-header" onclick="toggleFile(this)">
           <span class="file-icon">📄</span>
           <span class="file-name">${escapeHtml(filename)}</span>
-          <span class="file-count">${fileAssets.length} detection(s)</span>
+          <span class="file-count">${fileRows.length} detection(s)</span>
           <span class="toggle-icon">▼</span>
         </div>
         <div class="file-content">
@@ -433,24 +465,22 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
                 <th>Quantum-Safe</th>
                 <th>Severity</th>
                 <th>Risk Score</th>
+                <th>Suggested Alternative</th>
               </tr>
             </thead>
             <tbody>
     `;
 
     // Sort by line number
-    const sortedAssets = [...fileAssets].sort((a, b) => {
-      const lineA = a.detectionContexts?.[0]?.lineNumbers?.[0] || a.line || 0;
-      const lineB = b.detectionContexts?.[0]?.lineNumbers?.[0] || b.line || 0;
-      return lineA - lineB;
+    const sortedRows = [...fileRows].sort((a, b) => {
+      return a.line - b.line;
     });
 
-    for (const asset of sortedAssets) {
-      const lineNumbers = asset.detectionContexts?.[0]?.lineNumbers || [asset.line || 0];
-      const lineStr = lineNumbers.length > 1 
-        ? `${lineNumbers[0]}-${lineNumbers[lineNumbers.length - 1]}`
-        : String(lineNumbers[0] || 0);
+    for (const row of sortedRows) {
+      const asset = row.asset;
+      const lineStr = String(row.line || 0);
 
+      const suggestion = getQuantumAlternativeSuggestion(asset);
       fileSectionsHtml += `
         <tr class="severity-${escapeHtml(String(asset.severity || 'unknown'))}">
           <td class="line-number">${lineStr}</td>
@@ -459,6 +489,7 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
           <td><span class="quantum-badge quantum-${escapeHtml(String(asset.quantumSafe))}">${escapeHtml(String(asset.quantumSafe))}</span></td>
           <td><span class="severity-badge">${escapeHtml(String(asset.severity || 'unknown').toUpperCase())}</span></td>
           <td>${escapeHtml(String(asset.riskScore ?? asset.score ?? 0))}</td>
+          <td>${escapeHtml(suggestion.alternative)}</td>
         </tr>
       `;
     }
