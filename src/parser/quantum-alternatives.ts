@@ -2,7 +2,6 @@ import { CryptoAsset } from './types';
 
 export interface QuantumAlternativeSuggestion {
   alternative: string;
-  basis: string;
 }
 
 const algorithmSpecificAlternatives: Record<string, string> = {
@@ -37,8 +36,6 @@ export function getQuantumAlternativeSuggestion(asset: CryptoAsset): QuantumAlte
   if (asset.quantumSafe === true) {
     return {
       alternative: 'Current algorithm is already quantum-safe'
-      alternative: 'Current algorithm is already quantum-safe',
-      basis: 'No migration suggested because this detection is marked quantum-safe.'
     };
   }
 
@@ -50,15 +47,4 @@ export function getQuantumAlternativeSuggestion(asset: CryptoAsset): QuantumAlte
   return {
     alternative: specific ?? fallback ?? 'Use a NIST-standard post-quantum or modern vetted primitive for this use-case'
   };
-  const alternative = specific ?? fallback ?? 'Use a NIST-standard post-quantum or modern vetted primitive for this use-case';
-
-  const safetyStatus = asset.quantumSafe === false
-    ? 'Detected as non-quantum-safe.'
-    : asset.quantumSafe === 'partial'
-      ? 'Detected as partially quantum-resistant.'
-      : 'Quantum-safety status is unknown.';
-
-  const basis = `${safetyStatus} Suggestion is selected by matching the detected algorithm name first, then falling back to its primitive category (${normalizedPrimitive || 'unknown'}) and preferring NIST-standardized or widely recommended modern algorithms.`;
-
-  return { alternative, basis };
 }
