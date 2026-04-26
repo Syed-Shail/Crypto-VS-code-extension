@@ -352,6 +352,7 @@ export async function generateCBOM(assets: CryptoAsset[], outputPath: string): P
       severity: asset.severity ?? "unknown",
       riskScore: asset.riskScore ?? asset.score ?? 0,
       migrationRecommendation: getQuantumAlternativeSuggestion(asset).alternative
+      migrationRecommendation: getQuantumAlternativeSuggestion(asset)
     }
   }));
 
@@ -466,6 +467,7 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
                 <th>Severity</th>
                 <th>Risk Score</th>
                 <th>Suggested Alternative</th>
+                <th>Suggestion Basis</th>
               </tr>
             </thead>
             <tbody>
@@ -490,6 +492,7 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
           <td><span class="severity-badge">${escapeHtml(String(asset.severity || 'unknown').toUpperCase())}</span></td>
           <td>${escapeHtml(String(asset.riskScore ?? asset.score ?? 0))}</td>
           <td>${escapeHtml(suggestion.alternative)}</td>
+          <td>${escapeHtml(suggestion.basis)}</td>
         </tr>
       `;
     }
