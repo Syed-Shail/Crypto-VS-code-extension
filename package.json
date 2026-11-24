@@ -2,7 +2,7 @@
   "name": "crypto-detector",
   "displayName": "Crypto Inventory & Migration Readiness",
   "description": "Local cryptographic discovery with source evidence, classical status, quantum migration signals, and CycloneDX CBOM export.",
-  "version": "3.1.0",
+  "version": "4.1.0",
   "publisher": "syedshail",
   "repository": {
     "type": "git",

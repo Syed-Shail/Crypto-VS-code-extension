@@ -18,7 +18,7 @@ Make Crypto Detector a trustworthy cryptographic discovery and migration-plannin
 
 The current release has several scanners and report writers with overlapping behavior. The Tree-sitter path matches rule strings against many node types instead of interpreting call sites. Regex rules can miss multiline/comment/string context and use generic names that match ordinary identifiers. Workspace deduplication depends on detector IDs that include basenames, which can merge same-named files. Risk score and severity are inferred from quantum status, which conflates a future migration concern with a known classical weakness. The two CBOM writers emitted non-standard fields inside `cryptoProperties`, put free-form descriptions in the `cryptoFunctions` enum, and declared CycloneDX 1.6 despite not following its schema.
 
-Foundation changes delivered in 3.1.0: make the two CBOM export paths share a CycloneDX 1.7 builder; keep tool-specific fields in `properties`; represent source locations as individual CycloneDX occurrence records; separate classical status from quantum impact; and stop labeling all quantum-vulnerable algorithms as immediate high severity.
+Foundation changes delivered in 4.1.0: make the two CBOM export paths share a CycloneDX 1.7 builder; keep tool-specific fields in `properties`; represent source locations as individual CycloneDX occurrence records; separate classical status from quantum impact; and stop labeling all quantum-vulnerable algorithms as immediate high severity.
 
 ## Delivery sequence
 
