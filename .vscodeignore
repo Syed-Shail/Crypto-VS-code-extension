@@ -12,3 +12,9 @@ vsc-extension-quickstart.md
 scripts/**
 grammars/**
 !out/parser/grammars/**
+crypto-analysis/**
+test/**
+testdata/**
+benchmark/**
+PRODUCT-REFRESH.md
+*.vsix
