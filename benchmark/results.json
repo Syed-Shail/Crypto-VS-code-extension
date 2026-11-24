@@ -1,0 +1,66 @@
+{
+  "node": "v26.11.0",
+  "cpu": "Apple M5",
+  "results": [
+    {
+      "repository": "paramiko",
+      "files": 70,
+      "lines": 27672,
+      "runs": 3,
+      "median_seconds": {
+        "sequential": 0.345,
+        "cold": 0.352,
+        "warm": 0.002,
+        "incremental": 0.014
+      },
+      "lines_per_second_sequential": 80172,
+      "lines_per_second_cold": 78605,
+      "time_saved_vs_sequential_percent": {
+        "cold": -2,
+        "warm": 99.5,
+        "incremental": 96
+      },
+      "cached_results_identical": true
+    },
+    {
+      "repository": "jjwt",
+      "files": 407,
+      "lines": 44563,
+      "runs": 3,
+      "median_seconds": {
+        "sequential": 0.376,
+        "cold": 0.361,
+        "warm": 0.006,
+        "incremental": 0.021
+      },
+      "lines_per_second_sequential": 118433,
+      "lines_per_second_cold": 123330,
+      "time_saved_vs_sequential_percent": {
+        "cold": 4,
+        "warm": 98.3,
+        "incremental": 94.5
+      },
+      "cached_results_identical": true
+    },
+    {
+      "repository": "mbedtls",
+      "files": 150,
+      "lines": 92088,
+      "runs": 3,
+      "median_seconds": {
+        "sequential": 0.768,
+        "cold": 0.766,
+        "warm": 0.003,
+        "incremental": 0.042
+      },
+      "lines_per_second_sequential": 119863,
+      "lines_per_second_cold": 120237,
+      "time_saved_vs_sequential_percent": {
+        "cold": 0.3,
+        "warm": 99.7,
+        "incremental": 94.5
+      },
+      "cached_results_identical": true
+    }
+  ]
+}

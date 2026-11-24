@@ -63,5 +63,39 @@
     { "name": "SHA512", "api": "crypto.createHash('sha512')", "type": "hash", "primitive": "hash", "quantumSafe": "partial", "severity": "low", "description": "SHA-512 hash.", "patterns": ["sha512", "'sha512'", "\"sha512\""] },
     { "name": "AES", "api": "crypto.createCipheriv", "type": "symmetric", "primitive": "symmetric", "quantumSafe": "partial", "severity": "low", "description": "AES encryption.", "patterns": ["aes", "createCipheriv", "createDecipheriv"] },
     { "name": "RSA", "api": "crypto.generateKeyPair", "type": "asymmetric", "primitive": "asymmetric", "quantumSafe": false, "severity": "high", "description": "RSA key generation.", "patterns": ["rsa", "'rsa'", "\"rsa\""] }
+  ],
+  "go": [
+    { "name": "MD5", "api": "md5.New", "type": "hash", "primitive": "hash", "quantumSafe": false, "description": "Go standard-library MD5 hash constructor.", "patterns": ["md5.New", "md5.Sum"] },
+    { "name": "SHA1", "api": "sha1.New", "type": "hash", "primitive": "hash", "quantumSafe": false, "description": "Go standard-library SHA-1 hash constructor.", "patterns": ["sha1.New", "sha1.Sum"] },
+    { "name": "SHA256", "api": "sha256.New", "type": "hash", "primitive": "hash", "quantumSafe": "partial", "description": "Go standard-library SHA-256 hash constructor.", "patterns": ["sha256.New", "sha256.Sum256"] },
+    { "name": "SHA512", "api": "sha512.New", "type": "hash", "primitive": "hash", "quantumSafe": "partial", "description": "Go standard-library SHA-512 hash constructor.", "patterns": ["sha512.New", "sha512.Sum512"] },
+    { "name": "HMAC", "api": "hmac.New", "type": "mac", "primitive": "mac", "quantumSafe": "partial", "description": "Go standard-library HMAC constructor.", "patterns": ["hmac.New"] },
+    { "name": "AES", "api": "aes.NewCipher", "type": "symmetric", "primitive": "symmetric", "quantumSafe": "partial", "description": "Go standard-library AES block cipher constructor.", "patterns": ["aes.NewCipher"] },
+    { "name": "RSA", "api": "rsa.GenerateKey", "type": "asymmetric", "primitive": "asymmetric", "quantumSafe": false, "description": "Go standard-library RSA key generation.", "patterns": ["rsa.GenerateKey", "rsa.GenerateMultiPrimeKey"] },
+    { "name": "ECDSA", "api": "ecdsa.GenerateKey", "type": "asymmetric", "primitive": "asymmetric", "quantumSafe": false, "description": "Go standard-library ECDSA key generation.", "patterns": ["ecdsa.GenerateKey"] },
+    { "name": "Ed25519", "api": "ed25519.GenerateKey", "type": "asymmetric", "primitive": "asymmetric", "quantumSafe": false, "description": "Go standard-library Ed25519 key generation.", "patterns": ["ed25519.GenerateKey"] },
+    { "name": "X25519", "api": "ecdh.X25519", "type": "key-exchange", "primitive": "key-exchange", "quantumSafe": false, "description": "Go standard-library X25519 key agreement.", "patterns": ["ecdh.X25519"] }
+  ],
+  "rust": [
+    { "name": "MD5", "api": "Md5::new", "type": "hash", "primitive": "hash", "quantumSafe": false, "description": "Rust MD5 digest constructor.", "patterns": ["Md5::new"] },
+    { "name": "SHA1", "api": "Sha1::new", "type": "hash", "primitive": "hash", "quantumSafe": false, "description": "Rust SHA-1 digest constructor.", "patterns": ["Sha1::new"] },
+    { "name": "SHA256", "api": "Sha256::new", "type": "hash", "primitive": "hash", "quantumSafe": "partial", "description": "Rust SHA-256 digest constructor.", "patterns": ["Sha256::new"] },
+    { "name": "SHA512", "api": "Sha512::new", "type": "hash", "primitive": "hash", "quantumSafe": "partial", "description": "Rust SHA-512 digest constructor.", "patterns": ["Sha512::new"] },
+    { "name": "AES", "api": "Aes256::new", "type": "symmetric", "primitive": "symmetric", "quantumSafe": "partial", "description": "Rust AES block cipher constructor.", "patterns": ["Aes128::new", "Aes192::new", "Aes256::new"] },
+    { "name": "RSA", "api": "RsaPrivateKey::new", "type": "asymmetric", "primitive": "asymmetric", "quantumSafe": false, "description": "Rust RSA private key generation.", "patterns": ["RsaPrivateKey::new"] }
+  ],
+  "php": [
+    { "name": "MD5", "api": "md5", "type": "hash", "primitive": "hash", "quantumSafe": false, "description": "PHP MD5 digest function.", "patterns": ["md5"] },
+    { "name": "SHA1", "api": "sha1", "type": "hash", "primitive": "hash", "quantumSafe": false, "description": "PHP SHA-1 digest function.", "patterns": ["sha1"] },
+    { "name": "SHA256", "api": "hash", "type": "hash", "primitive": "hash", "quantumSafe": "partial", "description": "PHP hash function with SHA-256 algorithm argument.", "patterns": ["sha256", "sha-256"] },
+    { "name": "HMAC", "api": "hash_hmac", "type": "mac", "primitive": "mac", "quantumSafe": "partial", "description": "PHP keyed hash authentication function.", "patterns": ["hash_hmac"] },
+    { "name": "AES", "api": "openssl_encrypt", "type": "symmetric", "primitive": "symmetric", "quantumSafe": "partial", "description": "PHP OpenSSL encryption call with an AES cipher argument.", "patterns": ["aes-"] },
+    { "name": "RSA", "api": "openssl_pkey_new", "type": "asymmetric", "primitive": "asymmetric", "quantumSafe": false, "description": "PHP OpenSSL public-key generation; verify the selected key type.", "patterns": ["rsa"] }
+  ],
+  "ruby": [
+    { "name": "MD5", "api": "Digest::MD5.hexdigest", "type": "hash", "primitive": "hash", "quantumSafe": false, "description": "Ruby Digest MD5 operation.", "patterns": ["Digest::MD5.hexdigest", "Digest::MD5.digest"] },
+    { "name": "SHA1", "api": "Digest::SHA1.hexdigest", "type": "hash", "primitive": "hash", "quantumSafe": false, "description": "Ruby Digest SHA-1 operation.", "patterns": ["Digest::SHA1.hexdigest", "Digest::SHA1.digest"] },
+    { "name": "SHA256", "api": "Digest::SHA256.hexdigest", "type": "hash", "primitive": "hash", "quantumSafe": "partial", "description": "Ruby Digest SHA-256 operation.", "patterns": ["Digest::SHA256.hexdigest", "Digest::SHA256.digest"] },
+    { "name": "AES", "api": "OpenSSL::Cipher.new", "type": "symmetric", "primitive": "symmetric", "quantumSafe": "partial", "description": "Ruby OpenSSL cipher constructor; review the cipher argument and mode.", "patterns": ["OpenSSL::Cipher.new", "AES-"] }
   ]
 }

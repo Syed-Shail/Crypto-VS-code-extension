@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const force = process.argv.includes('--force');
 
 const GRAMMAR_DIR = path.join(__dirname, '..', 'grammars');
 const WASMS_PKG = path.join(__dirname, '..', 'node_modules', 'tree-sitter-wasms', 'out');
@@ -24,7 +25,14 @@ const grammars = [
   'tree-sitter-java.wasm',
   'tree-sitter-c.wasm',
   'tree-sitter-cpp.wasm',
-  'tree-sitter-javascript.wasm'
+  'tree-sitter-javascript.wasm',
+  'tree-sitter-typescript.wasm',
+  'tree-sitter-tsx.wasm',
+  'tree-sitter-go.wasm',
+  'tree-sitter-rust.wasm',
+  'tree-sitter-php.wasm',
+  'tree-sitter-ruby.wasm',
+  'tree-sitter-kotlin.wasm'
 ];
 
 console.log('\n📦 Copying pre-built WASM files from tree-sitter-wasms...\n');
@@ -39,6 +47,12 @@ for (const grammar of grammars) {
   if (!fs.existsSync(src)) {
     console.log(`⚠️  ${grammar} not found in package`);
     failCount++;
+    continue;
+  }
+
+  if (fs.existsSync(dest) && !force) {
+    console.log(`↪️  Preserved existing ${grammar} (pass --force to replace)`);
+    successCount++;
     continue;
   }
   

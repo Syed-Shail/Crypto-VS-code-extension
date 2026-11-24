@@ -1,9 +1,9 @@
 // src/parser/report-writer.ts
-import * as crypto from 'crypto';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { CryptoAsset } from './types';
+import { createCbomDocument } from './cbom';
 
 /* --------------------------------------------------------------------------
  * 🧩 CBOM (Cryptographic Bill of Materials) Report Generator
@@ -20,61 +20,7 @@ export async function writeCbomJson(
     workspaceFolder = folders[0];
   }
 
-  const components = assets.map((a, i) => {
-    const occurrences = (a.detectionContexts ?? []).flatMap(ctx => ctx.lineNumbers ?? []).length > 0
-      ? (a.detectionContexts ?? []).flatMap(ctx => ctx.lineNumbers ?? []).length
-      : a.occurrences ?? 1;
-
-    // Build evidence array with proper structure
-    const evidenceOccurrences = (a.detectionContexts ?? []).map(ctx => ({
-      location: ctx.filePath ?? 'unknown',
-      lineNumbers: ctx.lineNumbers ?? [],
-      snippet: (ctx.snippet ?? '').substring(0, 300)
-    }));
-
-    return {
-      type: 'cryptographic-asset',
-      'bom-ref': a.id ?? `${(a.name ?? 'unknown').toLowerCase()}-${i}`,
-      name: a.name ?? 'Unknown',
-      evidence: {
-        occurrences: evidenceOccurrences
-      },
-      cryptoProperties: {
-        assetType: a.assetType ?? 'algorithm',
-        algorithmProperties: {
-          primitive: a.primitive ?? a.type ?? 'unknown',
-          cryptoFunctions: [a.description ?? 'unknown']
-        },
-        quantumSafe: String(a.quantumSafe ?? 'unknown'),
-        severity: a.severity ?? 'unknown',
-        riskScore: a.riskScore ?? a.score ?? 0
-      }
-    };
-  });
-
-  const cbom = {
-    bomFormat: 'CycloneDX',
-    specVersion: '1.6',
-    serialNumber: `urn:uuid:${crypto.randomUUID()}`,
-    version: 1,
-    metadata: {
-      timestamp: new Date().toISOString(),
-      tools: [
-        {
-          vendor: 'Syed Shail',
-          name: 'Crypto Detector for VS Code',
-          version: '1.0.0'
-        }
-      ]
-    },
-    components,
-    statistics: {
-      totalDetected: assets.length,
-      highRisk: assets.filter(a => a.severity === 'high').length,
-      mediumRisk: assets.filter(a => a.severity === 'medium').length,
-      lowRisk: assets.filter(a => a.severity === 'low').length
-    }
-  };
+  const cbom = createCbomDocument(assets, workspaceFolder.uri.fsPath);
 
   const outPath = path.join(
     workspaceFolder.uri.fsPath,

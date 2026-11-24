@@ -97,7 +97,11 @@ async function updateHighlightsForEditor(editor: vscode.TextEditor, assets: Cryp
       const lineIndex = Math.max(0, Math.min(lineCount - 1, ln - 1));
       const lineText = editor.document.lineAt(lineIndex).text;
       const re = new RegExp(escapeRegex(name), 'i');
-      const match = re.exec(lineText);
+      const searchFrom = Math.max(0, Math.min(lineText.length, asset.column ?? 0));
+      const matchInRemainder = re.exec(lineText.slice(searchFrom));
+      const match = matchInRemainder
+        ? { ...matchInRemainder, index: matchInRemainder.index + searchFrom }
+        : null;
       if (!match) {
         // fallback: try to find any token that looks like the asset name (split words)
         const tokens = (name).split(/[\s@:_-]+/).filter(Boolean);
@@ -109,7 +113,7 @@ async function updateHighlightsForEditor(editor: vscode.TextEditor, assets: Cryp
             const start = m2.index;
             const range = new vscode.Range(lineIndex, start, lineIndex, start + m2[0].length);
             const deco = createDecorationOptionsForAsset(asset, range);
-            pushDecorationBySeverity(asset.severity, deco, highRanges, medRanges, lowRanges, unknownRanges);
+            pushDecorationBySeverity(asset, deco, highRanges, medRanges, lowRanges, unknownRanges);
             found = true;
             break;
           }
@@ -123,7 +127,7 @@ async function updateHighlightsForEditor(editor: vscode.TextEditor, assets: Cryp
       const end = match.index + (match[0]?.length ?? name.length);
       const range = new vscode.Range(lineIndex, start, lineIndex, end);
       const deco = createDecorationOptionsForAsset(asset, range);
-      pushDecorationBySeverity(asset.severity, deco, highRanges, medRanges, lowRanges, unknownRanges);
+      pushDecorationBySeverity(asset, deco, highRanges, medRanges, lowRanges, unknownRanges);
     }
   }
 
@@ -139,13 +143,19 @@ function createDecorationOptionsForAsset(asset: CryptoAsset, range: vscode.Range
 }
 
 function pushDecorationBySeverity(
-  sev: string | undefined,
+  asset: CryptoAsset,
   deco: vscode.DecorationOptions,
   highRanges: vscode.DecorationOptions[],
   medRanges: vscode.DecorationOptions[],
   lowRanges: vscode.DecorationOptions[],
   unknownRanges: vscode.DecorationOptions[]
 ) {
+  // Text-only matches are candidates until a language-aware rule confirms a call site.
+  if (asset.confidence !== 'high') {
+    unknownRanges.push(deco);
+    return;
+  }
+  const sev = asset.severity;
   if (sev === 'high') highRanges.push(deco);
   else if (sev === 'medium') medRanges.push(deco);
   else if (sev === 'low') lowRanges.push(deco);
@@ -156,9 +166,11 @@ function makeTooltipForAsset(a: CryptoAsset): vscode.MarkdownString {
   const md = new vscode.MarkdownString(undefined, true);
   md.appendCodeblock(`${a.name}`, 'text');
   const severity = (a.severity ?? 'unknown').toUpperCase();
-  const score = a.riskScore ?? a.score ?? 0;
-  md.appendMarkdown(`**Severity:** ${severity} · **Risk Score:** ${score}\n\n`);
-  md.appendMarkdown(`**Quantum-safe:** \`${String(a.quantumSafe)}\`\n\n`);
+  const detectionLabel = a.confidence === 'low' || a.confidence === 'unknown' ? 'Candidate' : 'Call-site match';
+  md.appendMarkdown(`**Detection:** ${detectionLabel} · **Confidence:** ${a.confidence ?? 'unknown'} · **Method:** ${a.detectionMethod ?? 'unspecified'}\n\n`);
+  md.appendMarkdown(`**Classical status:** \`${a.classicalSecurityStatus ?? 'unknown'}\` · **Severity:** ${severity}\n\n`);
+  md.appendMarkdown(`**Quantum impact:** \`${a.quantumImpact ?? a.quantumSafe ?? 'unknown'}\`\n\n`);
+  if (a.reason) md.appendMarkdown(`**Assessment:** ${a.reason}\n\n`);
   if (a.description) md.appendMarkdown(`**Note:** ${a.description}\n\n`);
   md.appendMarkdown(`**Occurrences:** ${a.occurrences ?? 1}\n\n`);
   md.isTrusted = true;

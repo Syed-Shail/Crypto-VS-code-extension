@@ -23,6 +23,7 @@ interface CbomComponent {
       additionalContext?: string;
     }>;
   };
+  properties?: Array<{ name: string; value: string }>;
 }
 
 interface CbomFile {
@@ -52,12 +53,17 @@ function parseCbomToAssets(cbomPath: string): CryptoAsset[] {
       const props = component.cryptoProperties;
       const algoProps = props?.algorithmProperties;
       const primitive = algoProps?.primitive || 'unknown';
+      const customProperties = new Map((component.properties ?? []).map(property => [property.name, property.value]));
       
       // Determine quantum safety based on algorithm name and type
       let quantumSafe: boolean | 'partial' | 'unknown' = 'unknown';
       const name = component.name.toUpperCase();
-      
-      if (name.includes('KYBER') || name.includes('DILITHIUM') || 
+      const exportedQuantumStatus = customProperties.get('crypto-detector:quantum-status');
+
+      if (exportedQuantumStatus === 'true') quantumSafe = true;
+      else if (exportedQuantumStatus === 'false') quantumSafe = false;
+      else if (exportedQuantumStatus === 'partial') quantumSafe = 'partial';
+      else if (name.includes('KYBER') || name.includes('DILITHIUM') ||
           name.includes('FALCON') || name.includes('SPHINCS')) {
         quantumSafe = true;
       } else if (name.includes('RSA') || name.includes('DSA') || 
@@ -70,15 +76,19 @@ function parseCbomToAssets(cbomPath: string): CryptoAsset[] {
       }
 
       // Determine severity
-      let severity: 'low' | 'medium' | 'high' = 'low';
-      let riskScore = 10;
+      let severity: 'unknown' | 'none' | 'low' | 'medium' | 'high' = 'unknown';
+      let riskScore = 0;
 
-      if (quantumSafe === false) {
+      if (!customProperties.has('crypto-detector:severity') && quantumSafe === false) {
         severity = 'high';
         riskScore = 85;
-      } else if (quantumSafe === 'partial') {
+      } else if (!customProperties.has('crypto-detector:severity') && quantumSafe === 'partial') {
         severity = 'medium';
         riskScore = 50;
+      }
+      const exportedSeverity = customProperties.get('crypto-detector:severity');
+      if (exportedSeverity && ['unknown', 'none', 'low', 'medium', 'high'].includes(exportedSeverity)) {
+        severity = exportedSeverity as typeof severity;
       }
 
       // Handle secret keys as medium risk
@@ -104,6 +114,10 @@ function parseCbomToAssets(cbomPath: string): CryptoAsset[] {
         description: `Detected in CBOM: ${primitive} algorithm`,
         quantumSafe,
         severity,
+        classicalSecurityStatus: customProperties.get('crypto-detector:classical-security-status') as any,
+        quantumImpact: customProperties.get('crypto-detector:quantum-impact') as any,
+        confidence: customProperties.get('crypto-detector:detection-confidence') as any,
+        reason: customProperties.get('crypto-detector:assessment'),
         riskScore,
         score: riskScore,
         occurrences: occurrences.length || 1,

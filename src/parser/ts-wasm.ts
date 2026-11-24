@@ -2,7 +2,7 @@ import Parser from 'web-tree-sitter';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export type WasmLang = 'python' | 'java' | 'c' | 'cpp' | 'javascript';
+export type WasmLang = 'python' | 'java' | 'kotlin' | 'c' | 'cpp' | 'javascript' | 'typescript' | 'tsx' | 'go' | 'rust' | 'php' | 'ruby';
 
 type ParserMap = Partial<Record<WasmLang, Parser>>;
 
@@ -78,7 +78,14 @@ export async function getParsers(): Promise<ParserMap> {
         ['java', 'tree-sitter-java.wasm'],
         ['c', 'tree-sitter-c.wasm'],
         ['cpp', 'tree-sitter-cpp.wasm'],
-        ['javascript', 'tree-sitter-javascript.wasm']
+        ['javascript', 'tree-sitter-javascript.wasm'],
+        ['typescript', 'tree-sitter-typescript.wasm'],
+        ['tsx', 'tree-sitter-tsx.wasm'],
+        ['go', 'tree-sitter-go.wasm'],
+        ['rust', 'tree-sitter-rust.wasm'],
+        ['php', 'tree-sitter-php.wasm'],
+        ['ruby', 'tree-sitter-ruby.wasm'],
+        ['kotlin', 'tree-sitter-kotlin.wasm']
       ];
 
       for (const [langKey, filename] of configs) {
@@ -120,18 +127,38 @@ export async function getParserForExtension(
   if (normalized === '.java' && parsers.java) {
     return { langKey: 'java', parser: parsers.java };
   }
+  if (['.kt', '.kts'].includes(normalized) && parsers.kotlin) {
+    return { langKey: 'kotlin', parser: parsers.kotlin };
+  }
   if (normalized === '.c' && parsers.c) {
     return { langKey: 'c', parser: parsers.c };
   }
   if (['.cpp', '.cc', '.cxx', '.hpp', '.h'].includes(normalized) && parsers.cpp) {
     return { langKey: 'cpp', parser: parsers.cpp };
   }
-  if (['.js', '.jsx', '.mjs'].includes(normalized) && parsers.javascript) {
+  if (['.js', '.mjs'].includes(normalized) && parsers.javascript) {
     return { langKey: 'javascript', parser: parsers.javascript };
   }
-  if (['.ts', '.tsx'].includes(normalized) && parsers.javascript) {
-    // JavaScript parser can handle TypeScript syntax reasonably well
-    return { langKey: 'javascript', parser: parsers.javascript };
+  if (normalized === '.jsx' && parsers.tsx) {
+    return { langKey: 'tsx', parser: parsers.tsx };
+  }
+  if (normalized === '.ts' && parsers.typescript) {
+    return { langKey: 'typescript', parser: parsers.typescript };
+  }
+  if (normalized === '.tsx' && parsers.tsx) {
+    return { langKey: 'tsx', parser: parsers.tsx };
+  }
+  if (normalized === '.go' && parsers.go) {
+    return { langKey: 'go', parser: parsers.go };
+  }
+  if (normalized === '.rs' && parsers.rust) {
+    return { langKey: 'rust', parser: parsers.rust };
+  }
+  if (normalized === '.php' && parsers.php) {
+    return { langKey: 'php', parser: parsers.php };
+  }
+  if (normalized === '.rb' && parsers.ruby) {
+    return { langKey: 'ruby', parser: parsers.ruby };
   }
 
   return null;
@@ -152,15 +179,22 @@ export async function getParserForLanguageId(
   if (normalized === 'java' && parsers.java) {
     return { langKey: 'java', parser: parsers.java };
   }
+  if (['kotlin', 'kotlin-script'].includes(normalized) && parsers.kotlin) {
+    return { langKey: 'kotlin', parser: parsers.kotlin };
+  }
   if (normalized === 'c' && parsers.c) {
     return { langKey: 'c', parser: parsers.c };
   }
   if (['cpp', 'c++'].includes(normalized) && parsers.cpp) {
     return { langKey: 'cpp', parser: parsers.cpp };
   }
-  if (['javascript', 'javascriptreact', 'typescript', 'typescriptreact'].includes(normalized) && parsers.javascript) {
-    return { langKey: 'javascript', parser: parsers.javascript };
-  }
+  if (normalized === 'typescript' && parsers.typescript) return { langKey: 'typescript', parser: parsers.typescript };
+  if (['javascriptreact', 'typescriptreact'].includes(normalized) && parsers.tsx) return { langKey: 'tsx', parser: parsers.tsx };
+  if (normalized === 'javascript' && parsers.javascript) return { langKey: 'javascript', parser: parsers.javascript };
+  if (normalized === 'go' && parsers.go) return { langKey: 'go', parser: parsers.go };
+  if (normalized === 'rust' && parsers.rust) return { langKey: 'rust', parser: parsers.rust };
+  if (normalized === 'php' && parsers.php) return { langKey: 'php', parser: parsers.php };
+  if (normalized === 'ruby' && parsers.ruby) return { langKey: 'ruby', parser: parsers.ruby };
 
   return null;
 }

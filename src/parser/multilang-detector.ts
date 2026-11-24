@@ -1,5 +1,4 @@
 // src/parser/multilang-detector.ts - language-aware AST detection
-import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import { CryptoAsset, Severity } from "./types";
@@ -44,10 +43,17 @@ function patternToRegex(pattern: string): RegExp | null {
   return new RegExp(source, "i");
 }
 
-function getNodeContext(node: any, text: string): string {
-  const start = Math.max(0, node.startIndex - 120);
-  const end = Math.min(text.length, node.endIndex + 120);
-  return text.slice(start, end);
+function getCallTarget(node: any, text: string): string {
+  let argumentNode: any;
+  for (let i = 0; i < (node.childCount ?? 0); i++) {
+    const child = node.child(i);
+    if (/^(arguments|argument_list|arguments_list|value_arguments)$/.test((child?.type ?? '').toLowerCase())) {
+      argumentNode = child;
+      break;
+    }
+  }
+  const endIndex = argumentNode?.startIndex ?? node.endIndex;
+  return text.slice(node.startIndex, endIndex).trim();
 }
 
 function hasCryptoContext(context: string): boolean {
@@ -64,34 +70,20 @@ function isValidCryptoNode(node: any, text: string): boolean {
     return false;
   }
 
-  const context = getNodeContext(node, text);
+  // A match in an import, variable, declaration, or string is only a mention.
+  // Require a syntax node that represents an invoked function/method so evidence
+  // points to an actual call site. Language-specific APIs can extend this list.
+  const callNodeTypes = new Set([
+    'call_expression', // JavaScript, C, C++
+    'method_invocation', // Java
+    'call', // Python and Ruby
+    'function_call_expression', // PHP
+    'member_call_expression', // PHP
+    'scoped_call_expression' // PHP
+  ]);
+  if (!callNodeTypes.has(nodeType)) return false;
 
-  const validTypeHints = [
-    "import_statement",
-    "import_declaration",
-    "call_expression",
-    "method_invocation",
-    "function_call",
-    "call",
-    "assignment",
-    "variable_declarator",
-    "declaration",
-    "argument_list",
-    "field_expression",
-    "member_expression",
-    "string"
-  ];
-
-  const hasValidTypeHint = validTypeHints.some((hint) => nodeType.includes(hint));
-  if (!hasValidTypeHint) {
-    return false;
-  }
-
-  if (nodeType.includes("string")) {
-    return hasCryptoContext(context);
-  }
-
-  return true;
+  return hasCryptoContext(getCallTarget(node, text));
 }
 
 function ruleCandidates(rule: any): string[] {
@@ -128,9 +120,21 @@ function matchesRuleSignature(snippet: string, rule: any): boolean {
   return false;
 }
 
-export async function detectMultiLang(uri: vscode.Uri, preferredLangKey?: WasmLang): Promise<CryptoAsset[]> {
+function getRuleConfidence(node: any, text: string, rule: any): 'high' | 'medium' | 'low' {
+  const snippet = text.slice(node.startIndex, node.endIndex);
+  if (!matchesRuleSignature(snippet, rule)) return 'low';
+
+  const target = getCallTarget(node, text).replace(/\s+/g, '').toLowerCase();
+  const apiTarget = typeof rule?.api === 'string'
+    ? rule.api.split('(')[0].replace(/\s+/g, '').toLowerCase()
+    : '';
+  if (apiTarget && target === apiTarget) return 'high';
+  return hasCryptoContext(target) ? 'medium' : 'low';
+}
+
+export async function detectMultiLang(text: string, filename: string, preferredLangKey?: WasmLang): Promise<CryptoAsset[]> {
   try {
-    const ext = path.extname(uri.fsPath);
+    const ext = path.extname(filename);
     let parserInfo = await getParserForExtension(ext).catch(() => null);
 
     if (preferredLangKey) {
@@ -146,15 +150,16 @@ export async function detectMultiLang(uri: vscode.Uri, preferredLangKey?: WasmLa
     }
 
     const { langKey, parser } = parserInfo;
-    const langRules = CRYPTO_RULES[langKey] || [];
+    const langRules = CRYPTO_RULES[langKey]
+      || (langKey === 'typescript' || langKey === 'tsx' ? CRYPTO_RULES.javascript : undefined)
+      || (langKey === 'kotlin' ? CRYPTO_RULES.java : undefined)
+      || [];
     if (!Array.isArray(langRules) || langRules.length === 0) {
       return [];
     }
 
     console.log(`[MULTILANG] AST scanning with ${langKey} parser`);
 
-    const doc = await vscode.workspace.openTextDocument(uri);
-    const text = doc.getText();
     if (!text) return [];
 
     const tree = parser.parse(text);
@@ -182,14 +187,13 @@ export async function detectMultiLang(uri: vscode.Uri, preferredLangKey?: WasmLa
 
         for (const rule of langRules) {
           if (!rule?.name) continue;
+          const confidence = getRuleConfidence(node, text, rule);
+          if (confidence === 'low') continue;
 
-          if (!matchesRuleSignature(snippet, rule)) {
-            continue;
-          }
-
-          const line = text.substring(0, node.startIndex).split("\n").length || 1;
-          const snippetHash = snippet.trim().substring(0, 120).replace(/\s+/g, " ");
-          const detectionKey = `${rule.name}:${path.basename(uri.fsPath)}:${line}:${snippetHash}`;
+          const lineStart = text.lastIndexOf('\n', node.startIndex - 1) + 1;
+          const line = text.substring(0, lineStart).split("\n").length || 1;
+          const column = node.startIndex - lineStart;
+          const detectionKey = `${rule.name}:${path.resolve(filename)}:${node.startIndex}`;
 
           if (seenDetections.has(detectionKey)) continue;
           seenDetections.add(detectionKey);
@@ -204,18 +208,25 @@ export async function detectMultiLang(uri: vscode.Uri, preferredLangKey?: WasmLa
             description: rule.description ?? "",
             quantumSafe: rule.quantumSafe ?? "unknown",
             severity: risk.severity as Severity,
-            score: risk.score,
-            riskScore: risk.score,
             reason: risk.explanation,
-            source: uri.fsPath,
+            classicalSecurityStatus: risk.classicalSecurityStatus,
+            quantumImpact: risk.quantumImpact,
+            detectionMethod: 'syntax-call',
+            confidence,
+            source: filename,
             line,
+            column,
+            startOffset: node.startIndex,
+            endOffset: node.endIndex,
             occurrences: 1,
-            id: `ast:${(rule.name || "unknown").toLowerCase()}-${path.basename(uri.fsPath)}-${line}`,
+            id: `ast:${encodeURIComponent(path.resolve(filename))}:${(rule.name || "unknown").toLowerCase()}:${node.startIndex}`,
             detectionContexts: [
               {
-                filePath: uri.fsPath,
+                filePath: filename,
                 lineNumbers: [line],
-                snippet: snippet.substring(0, 300)
+                snippet: snippet.substring(0, 300),
+                startOffset: node.startIndex,
+                endOffset: node.endIndex
               }
             ]
           });

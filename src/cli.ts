@@ -6,13 +6,14 @@ import * as fs from "fs/promises";
 import * as fsSync from "fs";
 import * as path from "path";
 import { scanFile, scanFolder, scanGithubRepo, generateCBOM, generateDashboardHtml, openInBrowser } from "./core/scan-engine";
+const packageJson = require('../package.json');
 
 const program = new Command();
 
 program
   .name("crypto-detector")
   .description("CLI tool for cryptographic algorithm detection, GitHub scanning, CBOM generation and dashboards.")
-  .version("2.2.0");
+  .version(packageJson.version);
 
 /* ---------------------------------------------------
    COMMAND 1: SCAN A SINGLE FILE
@@ -45,7 +46,7 @@ program
       fsSync.mkdirSync(outputDir, { recursive: true });
 
       const cbomPath = path.join(outputDir, "cbom-file.json");
-      await generateCBOM(assets, cbomPath);
+      await generateCBOM(assets, cbomPath, path.dirname(filePath));
       console.log(`📦 CBOM saved: ${cbomPath}`);
 
       const dashboardPath = path.join(outputDir, "dashboard-file.html");
@@ -70,6 +71,7 @@ program
   .description("Scan an entire workspace/folder for cryptographic algorithms.")
   .option("-o, --output <dir>", "Output directory", "./crypto-analysis")
   .option("--no-browser", "Do not open dashboard")
+  .option("--no-cache", "Re-analyse every file instead of reusing unchanged results")
   .action(async (folder: string, options) => {
     try {
       const root = path.resolve(folder);
@@ -85,7 +87,7 @@ program
       }
 
       console.log(`📁 Scanning workspace: ${root}`);
-      const assets = await scanFolder(root);
+      const assets = await scanFolder(root, { cacheFile: options.cache === false ? false : undefined });
       console.log(`✅ Found ${assets.length} cryptographic algorithm(s)`);
 
       if (assets.length === 0) {
@@ -97,7 +99,7 @@ program
       fsSync.mkdirSync(outputDir, { recursive: true });
 
       const cbomPath = path.join(outputDir, "cbom-workspace.json");
-      await generateCBOM(assets, cbomPath);
+      await generateCBOM(assets, cbomPath, root);
       console.log(`📦 CBOM saved: ${cbomPath}`);
 
       const dashboardPath = path.join(outputDir, "dashboard-workspace.html");
@@ -130,7 +132,6 @@ program
       const result = await scanGithubRepo(repoUrl, outputDir);
 
       console.log("--------------------------------------------------");
-      console.log(`📁 Repo directory : ${result.repoDir}`);
       console.log(`📊 Code files     : ${result.codeFiles}`);
       console.log(`🔍 Detections     : ${result.detections}`);
       console.log(`📦 CBOM           : ${result.cbomPath}`);
@@ -154,6 +155,7 @@ program
   .command("export-cbom <folder>")
   .description("Export CBOM from all detected assets in a folder.")
   .option("-o, --output <file>", "Output cbom.json path", "./cbom.json")
+  .option("--no-cache", "Re-analyse every file instead of reusing unchanged results")
   .action(async (folder: string, options) => {
     try {
       const root = path.resolve(folder);
@@ -165,7 +167,7 @@ program
 
       console.log(`📁 Exporting CBOM for folder: ${root}`);
 
-      const assets = await scanFolder(root);
+      const assets = await scanFolder(root, { cacheFile: options.cache === false ? false : undefined });
       
       if (assets.length === 0) {
         console.log(`✅ No cryptographic algorithms detected.`);
@@ -173,7 +175,7 @@ program
       }
 
       const cbomPath = path.resolve(options.output);
-      await generateCBOM(assets, cbomPath);
+      await generateCBOM(assets, cbomPath, root);
 
       console.log(`📦 CBOM saved to: ${cbomPath}`);
       console.log(`✅ Export complete (${assets.length} assets)`);
@@ -190,6 +192,7 @@ program
   .command("show-dashboard <folder>")
   .description("Generate and open a dashboard for an existing scan.")
   .option("-o, --output <file>", "Output HTML file", "./dashboard.html")
+  .option("--no-cache", "Re-analyse every file instead of reusing unchanged results")
   .action(async (folder: string, options) => {
     try {
       const root = path.resolve(folder);
@@ -201,7 +204,7 @@ program
 
       console.log(`📄 Generating dashboard from: ${root}`);
 
-      const assets = await scanFolder(root);
+      const assets = await scanFolder(root, { cacheFile: options.cache === false ? false : undefined });
       
       if (assets.length === 0) {
         console.log(`✅ No cryptographic algorithms detected.`);

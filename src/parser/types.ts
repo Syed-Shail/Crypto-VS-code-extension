@@ -1,4 +1,6 @@
-export type Severity = "low" | "medium" | "high" | "none";
+export type Severity = "unknown" | "none" | "low" | "medium" | "high";
+export type ClassicalSecurityStatus = "broken" | "deprecated" | "no-known-weakness" | "unknown";
+export type QuantumImpact = "vulnerable" | "reduced-strength" | "post-quantum" | "unknown";
 
 /** Minimal canonical CryptoAsset used by detectors.
  *  Note: several modules historically used `type` while others used `primitive`.
@@ -18,15 +20,27 @@ export interface CryptoAsset {
     filePath?: string;
     lineNumbers?: number[];
     snippet?: string;
+    startOffset?: number;
+    endOffset?: number;
   }>;
 
   source?: string;
   quantumSafe?: boolean | "partial" | "unknown";
   severity?: Severity;
-  score?: number;                // legacy detector numeric score
-  riskScore?: number;            // canonical risk score used by UI/report
+  /** @deprecated Uncalibrated numeric risk scores are no longer emitted. */
+  score?: number;
+  /** @deprecated Uncalibrated numeric risk scores are no longer emitted. */
+  riskScore?: number;
   reason?: string;
   line?: number;
+  column?: number;
+  startOffset?: number;
+  endOffset?: number;
+  /** Classical algorithm status and quantum migration exposure are separate assessments. */
+  classicalSecurityStatus?: ClassicalSecurityStatus;
+  quantumImpact?: QuantumImpact;
+  confidence?: 'high' | 'medium' | 'low' | 'unknown';
+  detectionMethod?: 'syntax-call' | 'text-rule' | 'dependency' | 'configuration' | 'manual';
 }
 
 /** Rule structure used by regex + AST detectors.

@@ -3,15 +3,16 @@ import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import * as crypto from 'crypto';
 import { spawn } from 'child_process';
 import simpleGit from 'simple-git';
-import * as vscode from 'vscode';
 
 // Import the improved parser module
-import { regexDetector } from '../parser/regex-detector';
 import { CryptoAsset } from '../parser/types';
+import { analyzeSource } from '../parser/analyze-source';
 import { getQuantumAlternativeSuggestion } from '../parser/quantum-alternatives';
+import { createCbomDocument } from '../parser/cbom';
+import { assignRisk as assessCryptoRisk } from '../parser/risk-utils';
+import { ScanCache, analysisVersion } from './scan-cache';
 
 /* ----------------------- Types ----------------------- */
 export { CryptoAsset };
@@ -54,26 +55,9 @@ export function assignRisk(
   quantumSafe: boolean | 'partial' | 'unknown' | undefined,
   type?: string,
   name?: string
-): { severity: string; score: number; explanation: string } {
-  let severity = 'low';
-  let score = 10;
-  let explanation = 'Low risk detection.';
-
-  if (quantumSafe === false) {
-    severity = 'high';
-    score = 90;
-    explanation = `${name} is not quantum-safe or is insecure.`;
-  } else if (quantumSafe === 'partial') {
-    severity = 'medium';
-    score = 55;
-    explanation = `${name} has partial quantum resistance.`;
-  } else if (quantumSafe === true) {
-    severity = 'low';
-    score = 10;
-    explanation = `${name} is quantum-safe.`;
-  }
-
-  return { severity, score, explanation };
+): { severity: string; explanation: string } {
+  const { severity, explanation } = assessCryptoRisk(quantumSafe, type, name);
+  return { severity, explanation };
 }
 
 /* ----------------------- Utilities ----------------------- */
@@ -86,42 +70,58 @@ export function escapeHtml(s: any): string {
   return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as any)[m]);
 }
 
+/** Accept only a public github.com owner/repository URL before starting a clone. */
+export function normalizeGithubRepoUrl(input: string): string {
+  const trimmed = input.trim();
+  const candidate = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  let parsed: URL;
+  try {
+    parsed = new URL(candidate);
+  } catch {
+    throw new Error('Enter a valid GitHub repository URL.');
+  }
+  if (parsed.protocol !== 'https:' || parsed.hostname.toLowerCase() !== 'github.com' || parsed.username || parsed.password) {
+    throw new Error('Use an HTTPS URL on github.com.');
+  }
+  if (parsed.search || parsed.hash) throw new Error('Use a repository URL without a query or fragment.');
+
+  const segments = parsed.pathname.split('/').filter(Boolean);
+  if (segments.length !== 2) throw new Error('Use a repository URL in the form github.com/owner/repository.');
+  const owner = decodeURIComponent(segments[0]);
+  const repository = decodeURIComponent(segments[1]).replace(/\.git$/i, '');
+  if (!/^[A-Za-z0-9_.-]+$/.test(owner) || !/^[A-Za-z0-9_.-]+$/.test(repository)) {
+    throw new Error('The owner or repository name contains unsupported characters.');
+  }
+  return `https://github.com/${owner}/${repository}.git`;
+}
+
 /* ----------------------- scanFile using improved detector ----------------------- */
+const VERBOSE = process.env.CRYPTO_DETECTOR_VERBOSE === '1';
+const EXCLUDED_EXTS = ['.json', '.xml', '.md', '.txt', '.pdf', '.png', '.jpg', '.gif', '.svg', '.zip', '.tar', '.gz', '.lock', '.log', '.min.js', '.map'];
+const EXCLUDED_PATTERNS = ['cbom', 'package-lock', 'yarn.lock', '.min.', 'bundle', 'vendor'];
+const CODE_EXTS = ['.js', '.jsx', '.mjs', '.ts', '.tsx', '.py', '.java', '.kt', '.kts', '.cpp', '.cc', '.cxx', '.c', '.h', '.hpp', '.go', '.rs', '.php', '.rb'];
+const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'out', 'target', 'vendor', '__pycache__', 'venv', '.venv']);
+
+function isExcluded(filePath: string): boolean {
+  const ext = path.extname(filePath).toLowerCase();
+  const filename = path.basename(filePath).toLowerCase();
+  return EXCLUDED_EXTS.includes(ext) || EXCLUDED_PATTERNS.some(p => filename.includes(p));
+}
+
 export async function scanFile(filePath: string): Promise<CryptoAsset[]> {
   try {
-    console.log(`[scanFile] Scanning: ${path.basename(filePath)}`);
-    
-    // Check if file should be skipped
-    const ext = path.extname(filePath).toLowerCase();
-    const filename = path.basename(filePath).toLowerCase();
-    
-    const excludedExts = ['.json', '.xml', '.md', '.txt', '.pdf', '.png', '.jpg', '.gif', '.svg', '.zip', '.tar', '.gz', '.lock', '.log', '.min.js', '.map'];
-    const excludedPatterns = ['cbom', 'package-lock', 'yarn.lock', '.min.', 'bundle', 'vendor'];
-    
-    if (excludedExts.includes(ext)) {
-      console.log(`[scanFile] Skipping (excluded extension): ${filename}`);
+    if (isExcluded(filePath)) {
       return [];
     }
-    
-    if (excludedPatterns.some(p => filename.includes(p))) {
-      console.log(`[scanFile] Skipping (excluded pattern): ${filename}`);
-      return [];
-    }
-    
     const content = await fs.readFile(filePath, 'utf8');
-    
     if (!content || content.trim().length === 0) {
-      console.log(`[scanFile] Skipping (empty file): ${filename}`);
       return [];
     }
-    
-    // Use improved regex detector
-    const results = regexDetector.scan(content, filePath);
-    
-    if (results.length > 0) {
-      console.log(`[scanFile] ✓ Found ${results.length} detection(s) in ${filename}`);
+    // CLI and extension repository scans share the same syntax + text analysis pipeline.
+    const results = await analyzeSource(content, filePath);
+    if (VERBOSE && results.length > 0) {
+      console.log(`[scanFile] Found ${results.length} detection(s) in ${path.basename(filePath)}`);
     }
-    
     return results;
   } catch (err) {
     console.error(`[scanFile] Error scanning ${filePath}:`, err);
@@ -129,83 +129,118 @@ export async function scanFile(filePath: string): Promise<CryptoAsset[]> {
   }
 }
 
-/* ----------------------- scanFolder (recursive) ----------------------- */
-export async function scanFolder(root: string): Promise<CryptoAsset[]> {
-  console.log(`[scanFolder] Starting scan of: ${root}`);
-  
-  const allAssets: CryptoAsset[] = [];
-  const assetMap = new Map<string, CryptoAsset>();
+/* ----------------------- scanFolder (recursive, concurrent, cached) ----------------------- */
+export interface ScanFolderOptions {
+  /** Path of the persistent result cache, or false to disable caching. Defaults to ~/.cache/crypto-detector. */
+  cacheFile?: string | false;
+  /** Files read and analysed at the same time. */
+  concurrency?: number;
+  /** Called after each file with the number of files processed so far. */
+  onProgress?: (processed: number, total: number) => void;
+}
 
-  function getAllFiles(dir: string): string[] {
-    let entries: fsSync.Dirent[];
-    try {
-      entries = fsSync.readdirSync(dir, { withFileTypes: true });
-    } catch {
-      return [];
-    }
+export interface ScanStats {
+  files: number;
+  lines: number;
+  cacheHits: number;
+  cacheMisses: number;
+  seconds: number;
+}
 
-    const files: string[] = [];
-    for (const entry of entries) {
-      const full = path.join(dir, entry.name);
+export let lastScanStats: ScanStats | undefined;
 
-      // Skip common heavy folders
-      const skipDirs = ['node_modules', '.git', 'dist', 'build', 'out', 'target', 'vendor', '__pycache__', 'venv', '.venv'];
-      if (skipDirs.some(d => full.includes(path.sep + d + path.sep) || full.endsWith(path.sep + d))) {
-        continue;
-      }
-
-      if (entry.isDirectory()) {
-        files.push(...getAllFiles(full));
-      } else if (entry.isFile()) {
-        files.push(full);
-      }
-    }
-    return files;
+async function listSourceFiles(dir: string): Promise<string[]> {
+  let entries: fsSync.Dirent[];
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch {
+    return [];
   }
+  const nested = await Promise.all(entries.map(async entry => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      return SKIP_DIRS.has(entry.name) ? [] : listSourceFiles(full);
+    }
+    return entry.isFile() && CODE_EXTS.includes(path.extname(entry.name).toLowerCase()) && !isExcluded(full) ? [full] : [];
+  }));
+  return nested.flat().sort();
+}
 
-  const allFiles = getAllFiles(root);
-  
-  // Filter to source code files
-  const codeExts = ['.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.h', '.go', '.rs', '.cs', '.php', '.rb', '.swift'];
-  const codeFiles = allFiles.filter(f => {
-    const ext = path.extname(f).toLowerCase();
-    return codeExts.includes(ext);
-  });
+export async function scanFolder(root: string, options: ScanFolderOptions = {}): Promise<CryptoAsset[]> {
+  const started = Date.now();
+  const codeFiles = await listSourceFiles(root);
+  const cacheFile = options.cacheFile === undefined ? ScanCache.defaultPath(root) : options.cacheFile;
+  const cache = cacheFile ? await ScanCache.open(cacheFile, analysisVersion()) : undefined;
+  const concurrency = Math.max(1, options.concurrency ?? 8);
+  console.log(`[scanFolder] Scanning ${codeFiles.length} source files in ${root}${cache ? ' (cached)' : ''}`);
 
-  console.log(`[scanFolder] Found ${codeFiles.length} source files to scan`);
+  // Results are stored by file index and merged in order, so output matches a sequential scan.
+  const perFile: CryptoAsset[][] = new Array(codeFiles.length);
+  let next = 0;
+  let processed = 0;
+  let lines = 0;
 
-  for (const f of codeFiles) {
-    try {
-      const assets = await scanFile(f);
-      
-      // Deduplicate by creating unique keys
-      for (const asset of assets) {
-        const key = `${asset.name}:${asset.source}:${asset.line || 0}`;
-        
-        if (assetMap.has(key)) {
-          // Merge occurrences
-          const existing = assetMap.get(key)!;
-          existing.occurrences = (existing.occurrences || 1) + 1;
-          if (asset.detectionContexts) {
-            existing.detectionContexts = existing.detectionContexts || [];
-            existing.detectionContexts.push(...asset.detectionContexts);
+  async function worker(): Promise<void> {
+    while (next < codeFiles.length) {
+      const index = next++;
+      const file = codeFiles[index];
+      try {
+        const stat = await fs.stat(file);
+        let assets = cache?.byStat(file, stat);
+        if (!assets) {
+          const content = await fs.readFile(file, 'utf8');
+          lines += content.split('\n').length;
+          const hash = cache ? ScanCache.hash(content) : '';
+          assets = cache?.byHash(file, hash, stat);
+          if (!assets) {
+            assets = content.trim() ? await analyzeSource(content, file) : [];
+            cache?.store(file, stat, hash, assets);
           }
-        } else {
-          assetMap.set(key, asset);
         }
+        perFile[index] = assets;
+      } catch (err) {
+        console.warn(`[scanFolder] Error scanning ${file}:`, err);
+        perFile[index] = [];
       }
-    } catch (err) {
-      console.warn(`[scanFolder] Error scanning ${f}:`, err);
+      processed++;
+      options.onProgress?.(processed, codeFiles.length);
     }
   }
+  await Promise.all(Array.from({ length: Math.min(concurrency, codeFiles.length || 1) }, worker));
 
+  if (cache) {
+    cache.retainOnly(codeFiles);
+    await cache.save();
+  }
+
+  const assetMap = new Map<string, CryptoAsset>();
+  for (const assets of perFile) {
+    for (const original of assets || []) {
+      const asset = { ...original };
+      const key = `${asset.name}:${asset.source}:${asset.line || 0}`;
+      const existing = assetMap.get(key);
+      if (existing) {
+        existing.occurrences = (existing.occurrences || 1) + 1;
+        if (asset.detectionContexts) {
+          existing.detectionContexts = [...(existing.detectionContexts || []), ...asset.detectionContexts];
+        }
+      } else {
+        assetMap.set(key, asset);
+      }
+    }
+  }
   const deduplicated = Array.from(assetMap.values());
-  
-  console.log(`[scanFolder] ✅ Scan complete`);
-  console.log(`[scanFolder] 📊 Files scanned: ${codeFiles.length}`);
-  console.log(`[scanFolder] 🔍 Unique detections: ${deduplicated.length}`);
-  console.log(`[scanFolder] 📈 Total occurrences: ${deduplicated.reduce((sum, a) => sum + (a.occurrences || 1), 0)}`);
-  
+
+  lastScanStats = {
+    files: codeFiles.length,
+    lines,
+    cacheHits: cache?.hits ?? 0,
+    cacheMisses: cache ? cache.misses : codeFiles.length,
+    seconds: (Date.now() - started) / 1000,
+  };
+  console.log(`[scanFolder] Done in ${lastScanStats.seconds.toFixed(2)}s: ${codeFiles.length} files, ` +
+    `${deduplicated.length} unique detections` +
+    (cache ? `, ${cache.hits} reused from cache, ${cache.misses} analysed` : ''));
   return deduplicated;
 }
 
@@ -214,7 +249,6 @@ export async function scanGithubRepo(
   repoUrl: string,
   outputDir: string
 ): Promise<{
-  repoDir: string;
   codeFiles: number;
   detections: number;
   cbomPath: string;
@@ -222,18 +256,7 @@ export async function scanGithubRepo(
 }> {
   console.log(`\n📥 [GitHub] Cloning repository: ${repoUrl}`);
 
-  // Normalize URL
-  let normalizedUrl = repoUrl.trim()
-    .replace(/\/blob\/.*/, '')
-    .replace(/\.git.*/, '')
-    .replace(/\/$/, '');
-  
-  if (!normalizedUrl.startsWith('https://')) {
-    normalizedUrl = 'https://' + normalizedUrl;
-  }
-  if (!normalizedUrl.endsWith('.git')) {
-    normalizedUrl += '.git';
-  }
+  const normalizedUrl = normalizeGithubRepoUrl(repoUrl);
 
   const repoName = normalizedUrl.split('/').pop()?.replace('.git', '') ?? 'repo';
   
@@ -269,13 +292,15 @@ export async function scanGithubRepo(
       console.log('✅ [GitHub] Full clone succeeded');
     } catch (err2) {
       console.error('❌ [GitHub] Clone failed:', err2);
+      fsSync.rmSync(targetDir, { recursive: true, force: true });
       throw new Error(`Failed to clone repository: ${err2}`);
     }
   }
 
+  try {
   // Scan the cloned repository
   console.log(`\n🔍 [GitHub] Scanning cloned repository...`);
-  const allAssets = await scanFolder(targetDir);
+  const allAssets = await scanFolder(targetDir, { cacheFile: false }); // temporary clone: nothing to reuse later
 
   // Count code files
   function countCodeFiles(dir: string): number {
@@ -290,7 +315,7 @@ export async function scanGithubRepo(
           count += countCodeFiles(full);
         } else if (entry.isFile()) {
           const ext = path.extname(full).toLowerCase();
-          if (['.js', '.ts', '.py', '.java', '.cpp', '.c', '.go', '.rs'].includes(ext)) {
+          if (['.js', '.jsx', '.mjs', '.ts', '.tsx', '.py', '.java', '.kt', '.kts', '.cpp', '.cc', '.cxx', '.c', '.h', '.hpp', '.go', '.rs', '.php', '.rb'].includes(ext)) {
             count++;
           }
         }
@@ -305,83 +330,28 @@ export async function scanGithubRepo(
   fsSync.mkdirSync(outputDir, { recursive: true });
 
   const cbomPath = path.join(outputDir, `${repoName}-cbom.json`);
-  await generateCBOM(allAssets, cbomPath);
+  await generateCBOM(allAssets, cbomPath, targetDir);
   console.log(`📦 [GitHub] CBOM saved: ${cbomPath}`);
 
   const dashboardPath = path.join(outputDir, `${repoName}-dashboard.html`);
   generateDashboardHtml(allAssets, dashboardPath);
   console.log(`📊 [GitHub] Dashboard saved: ${dashboardPath}`);
 
-  // Cleanup temp directory (optional - comment out for debugging)
-  try {
-    setTimeout(() => {
-      fsSync.rmSync(targetDir, { recursive: true, force: true });
-      console.log(`🧹 [GitHub] Cleaned up temp directory`);
-    }, 5000);
-  } catch {}
-
   return {
-    repoDir: targetDir,
     codeFiles: codeFileCount,
     detections: allAssets.length,
     cbomPath,
     dashboardPath
   };
+  } finally {
+    fsSync.rmSync(targetDir, { recursive: true, force: true });
+    console.log('🧹 [GitHub] Cleaned up temporary clone');
+  }
 }
 
 /* ----------------------- generateCBOM ----------------------- */
-export async function generateCBOM(assets: CryptoAsset[], outputPath: string): Promise<void> {
-  const components = assets.map((asset, index) => ({
-    type: "cryptographic-asset",
-    "bom-ref": asset.id ?? `asset-${index}`,
-    name: asset.name || "Unknown",
-    evidence: {
-      occurrences: (asset.detectionContexts || []).map(ctx => ({
-        location: ctx.filePath || "",
-        lineNumbers: ctx.lineNumbers || [],
-        snippet: ctx.snippet || ""
-      }))
-    },
-    cryptoProperties: {
-      assetType: asset.assetType || "algorithm",
-      algorithmProperties: {
-        primitive: asset.primitive || asset.type || "unknown",
-        cryptoFunctions: [asset.description || "unknown"]
-      },
-      quantumSafe: `${asset.quantumSafe ?? "unknown"}`,
-      severity: asset.severity ?? "unknown",
-      riskScore: asset.riskScore ?? asset.score ?? 0,
-      migrationRecommendation: getQuantumAlternativeSuggestion(asset).alternative
-      
-    }
-  }));
-
-  const cbom = {
-    bomFormat: "CycloneDX",
-    specVersion: "1.6",
-    serialNumber: `urn:uuid:${crypto.randomUUID()}`,
-    version: 1,
-    metadata: {
-      timestamp: new Date().toISOString(),
-      tools: [
-        {
-          vendor: "Syed Shail",
-          name: "Crypto Detector Engine",
-          version: "2.1.1"
-        }
-      ]
-    },
-    components,
-    statistics: {
-      totalDetected: assets.length,
-      highRisk: assets.filter(a => a.severity === "high").length,
-      mediumRisk: assets.filter(a => a.severity === "medium").length,
-      lowRisk: assets.filter(a => a.severity === "low").length,
-      quantumSafe: assets.filter(a => a.quantumSafe === true).length,
-      quantumVulnerable: assets.filter(a => a.quantumSafe === false).length
-    }
-  };
-
+export async function generateCBOM(assets: CryptoAsset[], outputPath: string, sourceRoot?: string): Promise<void> {
+  const cbom = createCbomDocument(assets, sourceRoot);
   await fs.writeFile(outputPath, JSON.stringify(cbom, null, 2), "utf8");
 }
 
@@ -434,12 +404,13 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
   }
 
   const files = Object.keys(byFile).sort();
-  const total = assets.length;
+  const total = assets.reduce((sum, asset) => sum + (asset.occurrences ?? 1), 0);
   const high = assets.filter(a => String(a.severity).toLowerCase() === 'high').length;
   const medium = assets.filter(a => String(a.severity).toLowerCase() === 'medium').length;
   const low = assets.filter(a => String(a.severity).toLowerCase() === 'low').length;
-  const qSafe = assets.filter(a => a.quantumSafe === true).length;
-  const qVuln = assets.filter(a => a.quantumSafe === false).length;
+  const qSafe = assets.filter(a => a.quantumImpact === 'post-quantum' || a.quantumSafe === true).length;
+  const qVuln = assets.filter(a => a.quantumImpact === 'vulnerable' || a.quantumSafe === false).length;
+  const qReduced = assets.filter(a => a.quantumImpact === 'reduced-strength' || a.quantumSafe === 'partial').length;
 
   // Build file sections HTML
   let fileSectionsHtml = '';
@@ -463,9 +434,11 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
                 <th>Line</th>
                 <th>Algorithm</th>
                 <th>Type</th>
-                <th>Quantum-Safe</th>
+                <th>Quantum Impact</th>
+                <th>Classical Security</th>
                 <th>Severity</th>
-                <th>Risk Score</th>
+                <th>Detection</th>
+                <th>Calls</th>
                 <th>Suggested Alternative</th>
                 <th>Suggestion Basis</th>
               </tr>
@@ -488,11 +461,13 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
           <td class="line-number">${lineStr}</td>
           <td><strong>${escapeHtml(asset.name)}</strong></td>
           <td>${escapeHtml(asset.primitive || asset.type || 'unknown')}</td>
-          <td><span class="quantum-badge quantum-${escapeHtml(String(asset.quantumSafe))}">${escapeHtml(String(asset.quantumSafe))}</span></td>
+          <td><span class="quantum-badge quantum-${escapeHtml(String(asset.quantumSafe))}">${escapeHtml(String(asset.quantumImpact ?? asset.quantumSafe ?? 'unknown'))}</span></td>
+          <td>${escapeHtml(String(asset.classicalSecurityStatus ?? 'unknown'))}</td>
           <td><span class="severity-badge">${escapeHtml(String(asset.severity || 'unknown').toUpperCase())}</span></td>
-          <td>${escapeHtml(String(asset.riskScore ?? asset.score ?? 0))}</td>
+          <td>${escapeHtml(`${asset.confidence ?? 'unknown'} · ${asset.detectionMethod ?? 'unspecified'}`)}</td>
+          <td>${escapeHtml(String(asset.occurrences ?? 1))}</td>
           <td>${escapeHtml(suggestion.alternative)}</td>
-          
+          <td>${escapeHtml(suggestion.rationale)}</td>
         </tr>
       `;
     }
@@ -511,7 +486,6 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
   <meta charset="UTF-8">
   <title>Crypto Analysis Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root { 
       --bg:#0d1117; 
@@ -575,29 +549,6 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
     .stat.high .num { color:var(--high); }
     .stat.medium .num { color:var(--medium); }
     .stat.low .num { color:var(--low); }
-    
-    .charts { 
-      display:grid; 
-      grid-template-columns:repeat(auto-fit, minmax(400px, 1fr)); 
-      gap:20px; 
-      margin-bottom:24px; 
-    }
-    
-    .card { 
-      background:var(--card); 
-      border:1px solid var(--border); 
-      border-radius:8px; 
-      padding:20px; 
-    }
-    
-    .card h3 {
-      margin:0 0 16px 0;
-      font-size:1.1rem;
-    }
-    
-    canvas { 
-      max-height:280px !important; 
-    }
     
     .file-section {
       background:var(--card);
@@ -752,7 +703,7 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
     }
     
     @media (max-width:900px) { 
-      .charts, .stats { 
+      .stats {
         grid-template-columns:1fr; 
       } 
     }
@@ -764,23 +715,13 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
     <p class="subtitle">Cryptographic Bill of Materials (CBOM) — Grouped by File</p>
 
     <div class="stats">
-      <div class="stat"><div class="num">${total}</div><div class="label">Total Assets</div></div>
+      <div class="stat"><div class="num">${total}</div><div class="label">Detection Sites</div></div>
       <div class="stat high"><div class="num">${high}</div><div class="label">High Risk</div></div>
       <div class="stat medium"><div class="num">${medium}</div><div class="label">Medium Risk</div></div>
       <div class="stat low"><div class="num">${low}</div><div class="label">Low Risk</div></div>
-      <div class="stat"><div class="num">${qSafe}</div><div class="label">Quantum-Safe</div></div>
-      <div class="stat high"><div class="num">${qVuln}</div><div class="label">Vulnerable</div></div>
-    </div>
-
-    <div class="charts">
-      <div class="card">
-        <h3>Risk Distribution</h3>
-        <canvas id="riskChart"></canvas>
-      </div>
-      <div class="card">
-        <h3>Quantum Readiness</h3>
-        <canvas id="quantumChart"></canvas>
-      </div>
+      <div class="stat"><div class="num">${qSafe}</div><div class="label">Post-Quantum Algorithms</div></div>
+      <div class="stat high"><div class="num">${qVuln}</div><div class="label">Quantum-Vulnerable</div></div>
+      <div class="stat medium"><div class="num">${qReduced}</div><div class="label">Reduced Strength Under Quantum Search</div></div>
     </div>
 
     <h2 style="margin-top:32px;margin-bottom:16px;color:var(--accent);">Detections by File</h2>
@@ -795,41 +736,6 @@ export function generateDashboardHtml(assets: CryptoAsset[], outputPath: string)
       content.classList.toggle('collapsed');
     }
 
-    // Charts
-    new Chart(document.getElementById('riskChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['High','Medium','Low'],
-        datasets: [{
-          data: [${high}, ${medium}, ${low}],
-          backgroundColor: ['#f85149','#f0ad4e','#3fb950']
-        }]
-      },
-      options: { 
-        plugins: { 
-          legend: { labels: { color: '#e6edf3' } } 
-        } 
-      }
-    });
-
-    new Chart(document.getElementById('quantumChart'), {
-      type: 'bar',
-      data: {
-        labels: ['Quantum-Safe','Vulnerable'],
-        datasets: [{
-          label: 'Count',
-          data: [${qSafe}, ${qVuln}],
-          backgroundColor: ['#3fb950','#f85149']
-        }]
-      },
-      options: {
-        scales: {
-          y: { beginAtZero: true, ticks: { color: '#e6edf3' } },
-          x: { ticks: { color: '#e6edf3' } }
-        },
-        plugins: { legend: { display: false } }
-      }
-    });
   </script>
 </body>
 </html>`;

@@ -6,6 +6,7 @@ import * as path from "path";
 import type * as vscode from "vscode";
 
 interface DetectionRule {
+  language?: string;
   name: string;
   primitive?: string;
   type?: string;
@@ -40,6 +41,7 @@ export class RegexDetector {
             
             this.rules.push({
               ...rule,
+              language: langKey,
               patterns: patterns.length > 0 ? patterns : [rule.api || rule.name]
             });
           }
@@ -221,15 +223,6 @@ export class RegexDetector {
     return false;
   }
 
-  /**
-   * Create a strong detection key to avoid duplicates
-   */
-  private createDetectionKey(rule: string, filename: string, lineNumber: number, snippet: string): string {
-    // Use first 50 chars of snippet to differentiate multiple uses on same line
-    const snippetHash = snippet.trim().substring(0, 50);
-    return `${rule}::${path.basename(filename)}::${lineNumber}::${snippetHash}`;
-  }
-
   private patternToRegex(pattern: string): RegExp {
     const trimmed = (pattern || '').trim();
     const wildcardEscaped = trimmed.includes('*')
@@ -246,11 +239,20 @@ export class RegexDetector {
   scan(content: string, filename: string): CryptoAsset[] {
     const results: CryptoAsset[] = [];
     const lines = content.split("\n");
+    const lineOffsets: number[] = [];
+    let offset = 0;
+    for (const line of lines) {
+      lineOffsets.push(offset);
+      offset += line.length + 1;
+    }
     const seenDetections = new Set<string>();
 
     console.log(`[RegexDetector] Scanning ${path.basename(filename)} (${lines.length} lines)`);
 
-    for (const rule of this.rules) {
+    const language = this.languageForFilename(filename);
+    const applicableRules = language ? this.rules.filter(rule => rule.language === language) : this.rules;
+
+    for (const rule of applicableRules) {
       const patterns = rule.patterns || [rule.name];
       
       for (const pattern of patterns) {
@@ -265,7 +267,8 @@ export class RegexDetector {
         let matchCount = 0;
 
         lines.forEach((line, index) => {
-          if (!regex.test(line)) {
+          const match = regex.exec(line);
+          if (!match) {
             return;
           }
 
@@ -288,7 +291,9 @@ export class RegexDetector {
           }
 
           // Create strong detection key
-          const detectionKey = this.createDetectionKey(rule.name, filename, lineNumber, snippet);
+          const startOffset = lineOffsets[index] + match.index;
+          const endOffset = startOffset + match[0].length;
+          const detectionKey = `${rule.name}::${path.resolve(filename)}::${lineNumber}::${match.index}`;
           
           if (seenDetections.has(detectionKey)) {
             return;
@@ -310,19 +315,27 @@ export class RegexDetector {
             assetType: "algorithm",
             description: rule.description ?? "",
             quantumSafe: rule.quantumSafe ?? 'unknown',
-            severity: risk.severity as Severity,
-            score: risk.score,
-            riskScore: risk.score,
+            // A text match is an unconfirmed candidate, even when its name is a known weak primitive.
+            severity: 'unknown',
             reason: risk.explanation,
+            classicalSecurityStatus: risk.classicalSecurityStatus,
+            quantumImpact: risk.quantumImpact,
+            detectionMethod: 'text-rule',
+            confidence: 'low',
             source: filename,
             line: lineNumber,
+            column: match.index,
+            startOffset,
+            endOffset,
             occurrences: 1,
-            id: `regex:${rule.name.toLowerCase()}-${path.basename(filename)}-${lineNumber}`,
+            id: `regex:${encodeURIComponent(path.resolve(filename))}:${rule.name.toLowerCase()}:${startOffset}`,
             detectionContexts: [
               {
                 filePath: filename,
                 lineNumbers: [lineNumber],
-                snippet: snippet.substring(0, 300)
+                snippet: snippet.substring(0, 300),
+                startOffset,
+                endOffset
               }
             ]
           });
@@ -336,6 +349,20 @@ export class RegexDetector {
 
     console.log(`[RegexDetector] Found ${results.length} valid detections in ${path.basename(filename)}`);
     return results;
+  }
+
+  private languageForFilename(filename: string): string | undefined {
+    const ext = path.extname(filename).toLowerCase();
+    if (ext === '.py') return 'python';
+    if (ext === '.java' || ext === '.kt' || ext === '.kts') return 'java';
+    if (ext === '.c') return 'c';
+    if (['.cpp', '.cc', '.cxx', '.hpp', '.h'].includes(ext)) return 'cpp';
+    if (['.js', '.jsx', '.mjs', '.ts', '.tsx'].includes(ext)) return 'javascript';
+    if (ext === '.go') return 'go';
+    if (ext === '.rs') return 'rust';
+    if (ext === '.php') return 'php';
+    if (ext === '.rb') return 'ruby';
+    return undefined;
   }
 
   private escapeRegex(str: string): string {

@@ -1,61 +1,61 @@
-export type Severity = "none" | "low" | "medium" | "high" | "critical";
-
-export interface CryptoAsset {
-  name: string;
-  type: string;
-  source: string;
-  quantumSafe: boolean | "partial" | "unknown";
-  severity?: Severity;
-  score?: number;
-  reason?: string;
-  line?: number;
-}
+import { Severity } from './types';
 
 export interface RiskResult {
   severity: Severity;
-  score: number;
   explanation: string;
+  classicalSecurityStatus: 'broken' | 'deprecated' | 'no-known-weakness' | 'unknown';
+  quantumImpact: 'vulnerable' | 'reduced-strength' | 'post-quantum' | 'unknown';
 }
 
 /**
- * assignRisk - basic heuristic mapping for quantumSafe / type to severity & score.
- * Keep this lightweight; callers expect { severity, score, explanation }.
+ * Assign classical-security severity independently from quantum impact.
  */
 export function assignRisk(
   quantumSafe: boolean | "partial" | "unknown" | undefined,
   type?: string,
   name?: string
 ): RiskResult {
-  // Default
-  let severity: Severity = "low";
-  let score = 10;
-  let explanation = "Low risk / information-only detection.";
+  const algorithm = (name ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const broken = new Set(['md5', 'des', 'rc4', 'arc4']);
+  const deprecated = new Set(['sha1', '3des', 'tripledes', 'des3', 'desede', 'blowfish', 'dsa', 'rc2']);
+  const assessed = new Set([
+    'aes', 'aes128', 'aes192', 'aes256', 'sha224', 'sha256', 'sha384', 'sha512', 'sha3256', 'sha3512',
+    'blake2b', 'blake2s', 'hmac', 'chacha20', 'chacha20poly1305', 'rsa', 'ecc', 'ecdsa', 'ecdh',
+    'ed25519', 'x25519', 'x448', 'kyber', 'mlkem', 'dilithium', 'mldsa', 'falcon', 'sphincs', 'slhdsa'
+  ]);
+  const classicalSecurityStatus = broken.has(algorithm)
+    ? 'broken'
+    : deprecated.has(algorithm)
+      ? 'deprecated'
+      : assessed.has(algorithm)
+        ? 'no-known-weakness'
+        : 'unknown';
 
-  // If explicitly flagged not quantum-safe or legacy/insecure types
-  if (quantumSafe === false) {
-    severity = "high";
-    score = 90;
-    explanation = `${name ?? "Algorithm"} is not quantum-safe or is considered insecure/legacy.`;
-  } else if (quantumSafe === "partial") {
-    severity = "medium";
-    score = 55;
-    explanation = `${name ?? "Algorithm"} has partial quantum resistance or mixed recommendations.`;
-  } else if (quantumSafe === true) {
-    severity = "low";
-    score = 10;
-    explanation = `${name ?? "Algorithm"} is considered quantum-safe (post-quantum).`;
+  const quantumImpact = quantumSafe === false
+    ? 'vulnerable'
+    : quantumSafe === 'partial'
+      ? 'reduced-strength'
+      : quantumSafe === true
+        ? 'post-quantum'
+        : 'unknown';
+
+  let severity: Severity;
+  let explanation: string;
+  if (classicalSecurityStatus === 'broken') {
+    severity = 'high';
+    explanation = `${name} is considered cryptographically broken or unsuitable for security use.`;
+  } else if (classicalSecurityStatus === 'deprecated') {
+    severity = 'medium';
+    explanation = `${name} is a legacy or deprecated algorithm; review its use and migration requirements.`;
+  } else if (classicalSecurityStatus === 'unknown') {
+    severity = 'unknown';
+    explanation = 'The algorithm could not be assessed from the available identification.';
   } else {
-    // unknown fallback: use type heuristics
-    if (type && /md5|sha1|rc4|des|3des|des-ede3|rc2/i.test(type + "")) {
-      severity = "high";
-      score = 90;
-      explanation = `${name ?? "Algorithm"} appears to be a legacy/insecure primitive.`;
-    } else {
-      severity = "low";
-      score = 10;
-      explanation = `No high severity indicators found for ${name ?? "algorithm"}.`;
-    }
+    severity = 'none';
+    explanation = `No cataloged classical weakness was identified for ${name}; this does not validate its configuration or use.`;
   }
 
-  return { severity, score, explanation };
+  // Quantum exposure is reported separately: it is a migration planning signal,
+  // not proof of a current classical cryptographic break.
+  return { severity, explanation, classicalSecurityStatus, quantumImpact };
 }

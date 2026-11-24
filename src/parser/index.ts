@@ -1,10 +1,10 @@
 // src/parser/index.ts
 import * as vscode from 'vscode';
-import { regexDetector } from './regex-detector';
-import { detectMultiLang } from './multilang-detector';
 import { CryptoAsset } from './types';
 import * as path from 'path';
-import { getParserForExtension, getParserForLanguageId } from './ts-wasm';
+import { analyzeSource } from './analyze-source';
+import * as fs from 'fs';
+import { ScanCache, analysisVersion } from '../core/scan-cache';
 
 /**
  * File extensions that should NOT be scanned (data files, configs, etc.)
@@ -49,53 +49,10 @@ function shouldSkipFile(uri: vscode.Uri): boolean {
   return false;
 }
 
-function dedupeAssets(assets: CryptoAsset[]): CryptoAsset[] {
-  const merged = new Map<string, CryptoAsset>();
-
-  for (const asset of assets) {
-    const normalizedName = (asset.name || '').toLowerCase();
-    const normalizedSource = asset.source || '';
-    const key = `${normalizedName}:${normalizedSource}:${asset.line}:${asset.type || asset.primitive || 'unknown'}`;
-    const existing = merged.get(key);
-
-    if (!existing) {
-      merged.set(key, { ...asset });
-      continue;
-    }
-
-    existing.occurrences = (existing.occurrences || 0) + (asset.occurrences || 1);
-    if (asset.detectionContexts?.length) {
-      existing.detectionContexts = existing.detectionContexts || [];
-      existing.detectionContexts.push(...asset.detectionContexts);
-    }
-  }
-
-  return Array.from(merged.values());
-}
-
 async function detectLanguageAware(uri: vscode.Uri): Promise<CryptoAsset[]> {
-  const ext = path.extname(uri.fsPath).toLowerCase();
   const doc = await vscode.workspace.openTextDocument(uri);
-  const languageId = doc.languageId;
-
-  console.log(`🌐 Language detected: ${languageId} (${ext || 'no extension'})`);
-
-  const astDetections: CryptoAsset[] = [];
-  const parserInfoByLanguage = await getParserForLanguageId(languageId).catch(() => null);
-  const parserInfoByExtension = await getParserForExtension(ext).catch(() => null);
-  const parserInfo = parserInfoByLanguage || parserInfoByExtension;
-
-  if (parserInfo) {
-    console.log(`🧠 Using Tree-sitter parser: ${parserInfo.langKey}`);
-    astDetections.push(...(await detectMultiLang(uri, parserInfo.langKey).catch(() => [])));
-  } else {
-    console.log(`ℹ️ No parser configured for ${ext || languageId}; using regex-based detection`);
-  }
-
-  // Regex detection still runs as a complementary detector for language-specific rules.
-  const regexDetections = regexDetector.scan(doc.getText(), uri.fsPath);
-
-  return dedupeAssets([...astDetections, ...regexDetections]);
+  console.log(`🌐 Analyzing ${doc.languageId} source (${path.extname(uri.fsPath) || 'no extension'})`);
+  return analyzeSource(doc.getText(), uri.fsPath);
 }
 
 /**
@@ -132,6 +89,30 @@ export async function detectInDocument(uri: vscode.Uri): Promise<CryptoAsset[]> 
 /**
  * Scan entire workspace for crypto algorithms
  */
+let cacheDirectory: string | undefined;
+
+/** Where workspace scan results are cached (the extension passes its global storage folder). */
+export function setCacheDirectory(dir: string | undefined): void {
+  cacheDirectory = dir;
+}
+
+async function analyseWithCache(uri: vscode.Uri, cache: ScanCache | undefined): Promise<CryptoAsset[]> {
+  const open = vscode.workspace.textDocuments.find(doc => doc.uri.fsPath === uri.fsPath);
+  if (!cache || open?.isDirty) {
+    return detectLanguageAware(uri); // unsaved editor changes differ from disk, so never use the cache for them
+  }
+  const stat = await fs.promises.stat(uri.fsPath);
+  const byStat = cache.byStat(uri.fsPath, stat);
+  if (byStat) return byStat;
+  const content = await fs.promises.readFile(uri.fsPath, 'utf8');
+  const hash = ScanCache.hash(content);
+  const byHash = cache.byHash(uri.fsPath, hash, stat);
+  if (byHash) return byHash;
+  const assets = await analyzeSource(content, uri.fsPath);
+  cache.store(uri.fsPath, stat, hash, assets);
+  return assets;
+}
+
 export async function scanWorkspace(
   onProgress?: (p: { processed: number; total?: number }) => void,
   token?: vscode.CancellationToken
@@ -141,7 +122,7 @@ export async function scanWorkspace(
   
   // Find all relevant files (exclude data files)
   const files = await vscode.workspace.findFiles(
-    '**/*.{js,jsx,ts,tsx,py,java,cpp,c,h,rs,go,cs,php,rb,swift}',
+    '**/*.{js,jsx,mjs,ts,tsx,py,java,kt,kts,c,cc,cpp,cxx,h,hpp,rs,go,cs,php,rb,swift}',
     '{**/node_modules/**,**/.git/**,**/dist/**,**/build/**,**/out/**,**/target/**}'
   );
   
@@ -150,6 +131,10 @@ export async function scanWorkspace(
   const total = files.length;
   const assetMap: Record<string, CryptoAsset> = {};
   let processed = 0;
+  const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const cache = root && cacheDirectory
+    ? await ScanCache.open(ScanCache.defaultPath(root, cacheDirectory), analysisVersion())
+    : undefined;
 
   for (const uri of files) {
     if (token?.isCancellationRequested) {
@@ -165,11 +150,16 @@ export async function scanWorkspace(
     }
 
     try {
-      const assets = await detectLanguageAware(uri);
+      const assets = await analyseWithCache(uri, cache);
       
       // Merge results by ID
       for (const asset of assets) {
-        const assetId = asset.id || `unknown-${Date.now()}-${Math.random()}`;
+        const assetId = [
+          (asset.name || 'unknown').toLowerCase(),
+          path.resolve(asset.source || uri.fsPath),
+          asset.line ?? 0,
+          (asset.primitive || asset.type || 'unknown').toLowerCase()
+        ].join('::');
         
         if (!assetMap[assetId]) {
           assetMap[assetId] = { ...asset, id: assetId };
@@ -190,8 +180,14 @@ export async function scanWorkspace(
     onProgress?.({ processed, total });
   }
 
+  if (cache && !token?.isCancellationRequested) {
+    cache.retainOnly(files.map(uri => uri.fsPath));
+    await cache.save();
+  }
+
   const results = Object.values(assetMap);
-  console.log(`\n✅ Workspace scan complete. Found ${results.length} unique algorithms.`);
+  console.log(`\n✅ Workspace scan complete. Found ${results.length} unique algorithms` +
+    (cache ? ` (${cache.hits} files reused from cache, ${cache.misses} analysed).` : '.'));
   
   return results;
 }

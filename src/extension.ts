@@ -3,13 +3,70 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
-import { scanFile, scanFolder, scanGithubRepo, generateCBOM, generateDashboardHtml, openInBrowser } from "./core/scan-engine";
+import { scanFile, scanFolder, scanGithubRepo, generateCBOM, generateDashboardHtml, openInBrowser, normalizeGithubRepoUrl } from "./core/scan-engine";
 import * as parser from "./parser";
 import * as highlighter from "./highlighter";
 import { CryptoAsset } from "./parser/types";
 
 export function activate(context: vscode.ExtensionContext) {
+  // Reuse results for unchanged files between workspace scans.
+  parser.setCacheDirectory(context.globalStorageUri.fsPath);
   console.log("🔐 Crypto Detector Extension Activated");
+
+  const diagnostics = vscode.languages.createDiagnosticCollection("crypto-detector");
+  context.subscriptions.push(diagnostics);
+
+  function publishDiagnostics(assets: CryptoAsset[], clearScope?: string) {
+    const normalizedScope = clearScope ? path.resolve(clearScope) : undefined;
+    const staleUris: vscode.Uri[] = [];
+    diagnostics.forEach(uri => {
+      const filePath = path.resolve(uri.fsPath);
+      if (!normalizedScope || filePath === normalizedScope || filePath.startsWith(`${normalizedScope}${path.sep}`)) {
+        staleUris.push(uri);
+      }
+    });
+    staleUris.forEach(uri => diagnostics.delete(uri));
+    const byFile = new Map<string, vscode.Diagnostic[]>();
+    for (const asset of assets) {
+      const filePath = asset.source || asset.detectionContexts?.[0]?.filePath;
+      const lineNumber = asset.line || asset.detectionContexts?.[0]?.lineNumbers?.[0];
+      if (!filePath || !lineNumber || lineNumber < 1) continue;
+
+      const uri = vscode.Uri.file(filePath);
+      const context = asset.detectionContexts?.find(item => item.filePath === filePath);
+      const column = Math.max(asset.column ?? 0, 0);
+      const range = new vscode.Range(lineNumber - 1, column, lineNumber - 1, column + 1);
+      const confidence = asset.confidence ?? "unknown";
+      const quantumImpact = asset.quantumImpact ?? asset.quantumSafe ?? "unknown";
+      const message = [
+        `${asset.name} cryptographic usage`,
+        `Classical status: ${asset.classicalSecurityStatus ?? "unknown"}`,
+        `Quantum impact: ${quantumImpact}`,
+        `Detection: ${asset.detectionMethod ?? "unspecified"} (${confidence} confidence)`,
+        asset.reason
+      ].filter(Boolean).join(" · ");
+
+      const severity = confidence === "low" || confidence === "unknown"
+        ? vscode.DiagnosticSeverity.Hint
+        : confidence === "medium"
+          ? vscode.DiagnosticSeverity.Information
+        : asset.severity === "high"
+          ? vscode.DiagnosticSeverity.Error
+          : asset.severity === "medium"
+            ? vscode.DiagnosticSeverity.Warning
+            : vscode.DiagnosticSeverity.Information;
+      const diagnostic = new vscode.Diagnostic(range, message, severity);
+      diagnostic.source = "Crypto Detector";
+      diagnostic.code = `crypto-${(asset.name || "unknown").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+      const entries = byFile.get(uri.fsPath) ?? [];
+      entries.push(diagnostic);
+      byFile.set(uri.fsPath, entries);
+    }
+
+    for (const [filePath, entries] of byFile) {
+      diagnostics.set(vscode.Uri.file(filePath), entries);
+    }
+  }
 
   // Register highlighter
   highlighter.registerHighlighter(context);
@@ -36,6 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
         async (progress) => {
           try {
             const assets = await parser.detectInDocument(editor.document.uri);
+            publishDiagnostics(assets, filePath);
 
             if (assets.length === 0) {
               vscode.window.showInformationMessage("✅ No cryptographic algorithms detected in this file.");
@@ -102,6 +160,8 @@ export function activate(context: vscode.ExtensionContext) {
               return;
             }
 
+            publishDiagnostics(assets, root);
+
             if (assets.length === 0) {
               vscode.window.showInformationMessage("✅ No cryptographic algorithms detected in workspace.");
               return;
@@ -139,8 +199,12 @@ export function activate(context: vscode.ExtensionContext) {
         placeHolder: "https://github.com/username/repository",
         validateInput: (value) => {
           if (!value) return "URL is required";
-          if (!value.includes("github.com")) return "Must be a GitHub URL";
-          return null;
+          try {
+            normalizeGithubRepoUrl(value);
+            return null;
+          } catch (err: any) {
+            return err.message;
+          }
         }
       });
 
@@ -210,7 +274,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             if (!saveUri) return;
 
-            await generateCBOM(assets, saveUri.fsPath);
+            await generateCBOM(assets, saveUri.fsPath, root);
 
             const choice = await vscode.window.showInformationMessage(
               `✅ CBOM exported: ${path.basename(saveUri.fsPath)}`,

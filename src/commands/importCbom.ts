@@ -25,6 +25,7 @@ interface CbomComponent {
       snippet?: string;
     }>;
   };
+  properties?: Array<{ name: string; value: string }>;
 }
 
 interface CbomFile {
@@ -62,18 +63,19 @@ export async function importCbom() {
 
     // Convert CBOM components to CryptoAsset format
     const assets: CryptoAsset[] = cbom.components.map((comp, index) => {
+      const customProperties = new Map((comp.properties ?? []).map(property => [property.name, property.value]));
       const name = comp.name || `Unknown-${index}`;
       const primitive = comp.cryptoProperties?.algorithmProperties?.primitive || 
                        comp.cryptoProperties?.assetType || 
                        'unknown';
       
       let quantumSafe: boolean | 'partial' | 'unknown' = 'unknown';
-      const qsValue = comp.cryptoProperties?.quantumSafe;
+      const qsValue = customProperties.get('crypto-detector:quantum-status') ?? comp.cryptoProperties?.quantumSafe;
       if (qsValue === true || qsValue === 'true') quantumSafe = true;
       else if (qsValue === false || qsValue === 'false') quantumSafe = false;
       else if (qsValue === 'partial') quantumSafe = 'partial';
 
-      const severity = (comp.cryptoProperties?.severity?.toLowerCase() || 'unknown') as Severity;
+      const severity = (customProperties.get('crypto-detector:severity')?.toLowerCase() || comp.cryptoProperties?.severity?.toLowerCase() || 'unknown') as Severity;
       const riskScore = comp.cryptoProperties?.riskScore || 0;
 
       const detectionContexts = comp.evidence?.occurrences?.map(occ => ({
@@ -93,6 +95,9 @@ export async function importCbom() {
         score: riskScore,
         riskScore,
         reason: `Imported from CBOM`,
+        classicalSecurityStatus: customProperties.get('crypto-detector:classical-security-status') as any,
+        quantumImpact: customProperties.get('crypto-detector:quantum-impact') as any,
+        confidence: customProperties.get('crypto-detector:detection-confidence') as any,
         source: filePath,
         occurrences: detectionContexts.length || 1,
         id: `cbom:${name.toLowerCase()}-${index}`,

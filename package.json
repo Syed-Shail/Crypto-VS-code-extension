@@ -1,8 +1,8 @@
 {
   "name": "crypto-detector",
-  "displayName": "Crypto Algorithm Detector",
-  "description": "Detects cryptographic algorithms in source code, scans GitHub repos, exports CBOMs, and generates dashboards.",
-  "version": "3.0.1",
+  "displayName": "Crypto Inventory & Migration Readiness",
+  "description": "Local cryptographic discovery with source evidence, classical status, quantum migration signals, and CycloneDX CBOM export.",
+  "version": "3.1.0",
   "publisher": "syedshail",
   "repository": {
     "type": "git",
@@ -22,19 +22,12 @@
     "quantum",
     "cbom",
     "cli",
-    "sarif",
     "code-analysis"
   ],
-
-
   "main": "./out/extension.js",
-
- 
   "bin": {
     "crypto-detector": "./out/cli.js"
   },
-
-
   "activationEvents": [
     "onCommand:crypto-detector.scan-file",
     "onCommand:crypto-detector.scan-workspace",
@@ -42,8 +35,6 @@
     "onCommand:crypto-detector.export-cbom",
     "onCommand:crypto-detector.show-dashboard"
   ],
-
- 
   "contributes": {
     "commands": [
       {
@@ -77,8 +68,6 @@
         "icon": "$(graph)"
       }
     ],
-
-   
     "menus": {
       "editor/context": [
         {
@@ -93,39 +82,9 @@
           "group": "crypto-detector"
         }
       ]
-    },
-
-   
-    "configuration": {
-      "type": "object",
-      "title": "Crypto Detector Settings",
-      "properties": {
-        "cryptoDetector.languageGlobs": {
-          "type": "array",
-          "default": ["**/*.{js,ts,py,java,go,rs,cpp,c,h}"],
-          "description": "File patterns to include when scanning."
-        },
-        "cryptoDetector.excludeGlobs": {
-          "type": "array",
-          "default": ["**/node_modules/**", "**/.git/**", "**/dist/**", "**/build/**"],
-          "description": "Folders or file patterns to exclude."
-        },
-        "cryptoDetector.outputCbom": {
-          "type": "boolean",
-          "default": true,
-          "description": "If true, writes a cbom.json report."
-        },
-        "cryptoDetector.githubToken": {
-          "type": "string",
-          "default": "",
-          "description": "GitHub Personal Access Token (optional, for future use)."
-        }
-      }
     }
   },
-
- 
- "scripts": {
+  "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./ && npm run copy-resources",
     "copy-resources": "node scripts/copy-resources.js",
@@ -136,19 +95,16 @@
     "package": "vsce package",
     "publish": "vsce publish",
     "download-grammars": "node scripts/copy-wasms.js",
-    "setup": "npm run download-grammars && npm run compile"
+    "setup": "npm run download-grammars && npm run compile",
+    "test:unit": "node --test test/",
+    "benchmark": "node scripts/benchmark.js"
   },
-
-
- 
   "devDependencies": {
     "@types/node": "^18.19.130",
     "@types/vscode": "^1.80.0",
     "@vscode/vsce": "^2.22.0",
     "typescript": "^5.9.3"
   },
-
- 
   "dependencies": {
     "@octokit/rest": "^20.0.2",
     "chart.js": "^4.5.1",
